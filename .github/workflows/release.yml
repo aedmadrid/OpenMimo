@@ -85,6 +85,31 @@ jobs:
           args: ${{ matrix.tauri_args }}
           tagName: v__VERSION__
           releaseName: 'OpenMimo v__VERSION__'
-          releaseBody: 'Instaladores oficiales de OpenMimo para macOS (.dmg, Apple Silicon e Intel), Windows (.exe/.msi) y Linux (.AppImage). Licencia GNU GPLv3.'
+          releaseBody: |
+            Instaladores oficiales de OpenMimo (GNU GPLv3).
+
+            ### macOS
+            1. Abre el `.dmg` y arrastra **OpenMimo** a *Aplicaciones*.
+               Usa el DMG `aarch64` en Apple Silicon y el `x64` en Macs Intel.
+            2. La app no está firmada ni notarizada (proyecto FOSS sin certificado de Apple).
+               Si macOS dice que está dañada o que no se puede abrir, ejecuta en Terminal:
+
+               ```bash
+               xattr -dr com.apple.quarantine /Applications/OpenMimo.app
+               ```
+
+               y vuelve a abrirla. También puedes hacer clic derecho → **Abrir** la primera vez.
+
+            ### Windows
+            - Si SmartScreen muestra «Windows protegió tu PC», pulsa **Más información → Ejecutar de todas formas**.
+            - `.exe` es el instalador NSIS y `.msi` el instalador MSI.
+
+            ### Linux
+            ```bash
+            chmod +x OpenMimo_*.AppImage
+            ./OpenMimo_*.AppImage
+            ```
+
+            **Estado experimental:** guarda copias en formato `.omimo` y revisa siempre tus horarios antes de publicarlos. OpenMimo no está afiliado a Mimosa.
           releaseDraft: false
           prerelease: false
