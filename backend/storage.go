@@ -107,15 +107,16 @@ type ProjectSummary struct {
 }
 
 type SharedRemoteEntry struct {
-	ProjectID   string `json:"projectId"`
-	Name        string `json:"name"`
-	Institution string `json:"institution"`
-	ShareCode   string `json:"shareCode"`
-	IPFSCid     string `json:"ipfsCid,omitempty"`
-	HostURL     string `json:"hostUrl"`
-	HostOnline  bool   `json:"hostOnline"`
-	HostOpen    bool   `json:"hostOpen"`
-	LastSeen    string `json:"lastSeen"`
+	ProjectID   string   `json:"projectId"`
+	Name        string   `json:"name"`
+	Institution string   `json:"institution"`
+	ShareCode   string   `json:"shareCode"`
+	IPFSCid     string   `json:"ipfsCid,omitempty"`
+	HostURL     string   `json:"hostUrl"`
+	AltURLs     []string `json:"altUrls,omitempty"`
+	HostOnline  bool     `json:"hostOnline"`
+	HostOpen    bool     `json:"hostOpen"`
+	LastSeen    string   `json:"lastSeen"`
 }
 
 type OpenTab struct {

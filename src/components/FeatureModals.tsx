@@ -343,6 +343,9 @@ const CollabModal: React.FC<{
                 </div>
               </div>
               <div style={{ fontSize: 11.5, color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                {isEn ? 'Host LAN URL' : 'Dirección de red local'}: {project.collab.hostUrl}
+              </div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', fontFamily: 'monospace' }}>
                 IPFS CID ({project.collab.ipfsMode === 'kubo' ? 'Kubo node' : 'CIDv1'}): {project.collab.ipfsCid}
               </div>
               <div style={{ fontSize: 11.5, color: '#15803d' }}>

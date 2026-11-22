@@ -183,6 +183,8 @@ export const api = {
     req<ApiPayload>('/api/collab/share', { method: 'POST', body: JSON.stringify({ stop }) }),
   joinCollab: (body: { shareCode?: string; hostUrl?: string; projectId?: string }) =>
     req<ApiPayload>('/api/collab/join', { method: 'POST', body: JSON.stringify(body) }),
+  pullCollab: () =>
+    req<ApiPayload>('/api/collab/pull', { method: 'POST' }),
 
   getMcpConfig: () =>
     req<{ enabled: boolean; httpUrl: string; stdioCommand: string; stdioArgs: string[]; toolsCount: number; payload: ApiPayload }>(

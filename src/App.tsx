@@ -231,19 +231,25 @@ export const App: React.FC = () => {
     }
   }, [lang, showToast]);
 
-  // Real-time SSE listener when active project is shared or remote (Timetables + Collaborative Guides!)
+  // Real-time SSE listener + fallback sync when active project is shared or remote (Timetables + Collaborative Guides!)
   useEffect(() => {
     const proj = data?.project;
     if (!proj || (!proj.collab?.shared && !proj.collab?.isRemote)) return;
     let es: EventSource | null = null;
+    let pollTimer: number | null = null;
     let cancelled = false;
+    const syncLatest = () => {
+      if (proj.collab?.isRemote) {
+        api.pullCollab().then(setData).catch(() => {});
+      } else {
+        api.getProject().then(setData).catch(() => {});
+      }
+    };
     (async () => {
       const base = proj.collab.isRemote && proj.collab.hostUrl ? proj.collab.hostUrl : await getApiBase();
       if (cancelled) return;
       es = new EventSource(`${base}/api/collab/events?projectId=${encodeURIComponent(proj.id)}`);
-      es.addEventListener('updated', () => {
-        api.getProject().then(setData).catch(() => {});
-      });
+      es.addEventListener('updated', syncLatest);
       es.addEventListener('closed', () => {
         showToast(
           lang === 'en'
@@ -251,14 +257,19 @@ export const App: React.FC = () => {
             : 'El equipo anfitrión cerró el archivo (solo lectura)',
           true
         );
+        syncLatest();
         refreshWorkspace();
       });
+      if (proj.collab.isRemote) {
+        pollTimer = window.setInterval(syncLatest, 5000);
+      }
     })();
     return () => {
       cancelled = true;
+      if (pollTimer !== null) window.clearInterval(pollTimer);
       es?.close();
     };
-  }, [data?.project?.id, data?.project?.collab?.shared, data?.project?.collab?.isRemote, lang, showToast, refreshWorkspace]);
+  }, [data?.project?.id, data?.project?.collab?.shared, data?.project?.collab?.isRemote, data?.project?.collab?.hostUrl, lang, showToast, refreshWorkspace]);
 
   const toggleLanguage = useCallback(() => {
     const nextLang: 'es' | 'en' = lang === 'en' ? 'es' : 'en';

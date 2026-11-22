@@ -82,10 +82,33 @@ func (s *AppState) syncMirrorsLocked() {
 	}
 }
 
+func (s *AppState) refreshSharedTabLocked(p *Project) {
+	if p == nil || !p.Collab.Shared || p.Collab.IsRemote || s.listenPort <= 0 {
+		return
+	}
+	primary, alts := BuildHostURLs(s.listenPort)
+	p.Collab.HostURL = primary
+	p.Collab.HostOpen = true
+	if p.Collab.IPFSCid == "" {
+		raw, _ := json.Marshal(p)
+		cid, mode := PublishToIPFS(raw)
+		p.Collab.IPFSCid = cid
+		p.Collab.IPFSMode = mode
+	}
+	p.Collab.ShareCode = EncodeShareCode(primary, alts, p.ID, p.Collab.IPFSCid)
+}
+
+func (s *AppState) refreshAllSharedLocked() {
+	for _, t := range s.tabs {
+		s.refreshSharedTabLocked(t.Project)
+	}
+}
+
 func (s *AppState) openTabLocked(p *Project) {
 	if p.ID == "" {
 		p.ID = fmt.Sprintf("proj_%d", time.Now().UnixNano())
 	}
+	s.refreshSharedTabLocked(p)
 	for _, t := range s.tabs {
 		if t.Project.ID == p.ID {
 			t.Project = p
@@ -147,10 +170,20 @@ func (s *AppState) guardEditableLocked() error {
 	}
 	p := tab.Project
 	if p.Collab.IsRemote {
-		online, open, _ := ProbeRemoteHost(p.Collab.HostURL, p.ID)
+		var alts []string
+		if tok, err := DecodeShareCode(p.Collab.ShareCode); err == nil {
+			alts = tok.AltURLs
+		}
+		workingURL, online, open, _ := ProbeRemoteHost(p.Collab.HostURL, alts, p.ID)
+		if workingURL != "" {
+			p.Collab.HostURL = workingURL
+		}
 		p.Collab.HostOpen = online && open
-		if !online || !open {
-			return fmt.Errorf("este archivo remoto es solo lectura porque el equipo original no lo tiene abierto")
+		if !online {
+			return fmt.Errorf("no se puede conectar con el equipo anfitrión (%s); verifica la red o el firewall", p.Collab.HostURL)
+		}
+		if !open {
+			return fmt.Errorf("este archivo remoto es solo lectura porque el equipo original lo cerró o dejó de compartirlo")
 		}
 	}
 	return nil
@@ -183,8 +216,9 @@ func (s *AppState) afterMutateLocked() {
 				cid, mode := PublishToIPFS(raw)
 				p.Collab.IPFSCid = cid
 				p.Collab.IPFSMode = mode
-				hostURL := fmt.Sprintf("http://%s:%d", LocalLANIP(), s.listenPort)
-				p.Collab.ShareCode = EncodeShareCode(hostURL, p.ID, cid)
+				primary, alts := BuildHostURLs(s.listenPort)
+				p.Collab.HostURL = primary
+				p.Collab.ShareCode = EncodeShareCode(primary, alts, p.ID, cid)
 			}
 			s.broadcastSSELocked(p.ID, "updated")
 		}
@@ -231,7 +265,16 @@ func (s *AppState) tabListLocked() []ProjectTabInfo {
 func (s *AppState) sharedListWithLiveStatusLocked() []SharedRemoteEntry {
 	reg := LoadSharedRegistry()
 	for i := range reg {
-		online, open, _ := ProbeRemoteHost(reg[i].HostURL, reg[i].ProjectID)
+		alts := reg[i].AltURLs
+		if len(alts) == 0 && reg[i].ShareCode != "" {
+			if tok, err := DecodeShareCode(reg[i].ShareCode); err == nil {
+				alts = tok.AltURLs
+			}
+		}
+		workingURL, online, open, _ := ProbeRemoteHost(reg[i].HostURL, alts, reg[i].ProjectID)
+		if workingURL != "" && online {
+			reg[i].HostURL = workingURL
+		}
 		reg[i].HostOnline = online
 		reg[i].HostOpen = online && open
 		if online {
@@ -962,11 +1005,11 @@ func main() {
 		p.Collab.HostOpen = true
 		raw, _ := json.Marshal(p)
 		cid, mode := PublishToIPFS(raw)
-		hostURL := fmt.Sprintf("http://%s:%d", LocalLANIP(), state.listenPort)
+		primary, alts := BuildHostURLs(state.listenPort)
 		p.Collab.IPFSCid = cid
 		p.Collab.IPFSMode = mode
-		p.Collab.HostURL = hostURL
-		p.Collab.ShareCode = EncodeShareCode(hostURL, p.ID, cid)
+		p.Collab.HostURL = primary
+		p.Collab.ShareCode = EncodeShareCode(primary, alts, p.ID, cid)
 		_ = SaveProjectToDisk(p)
 		writeJSON(w, 200, state.responsePayload())
 	}))
@@ -983,41 +1026,83 @@ func main() {
 			return
 		}
 		hostURL, projID, cid := req.HostURL, req.ProjectID, ""
+		var altURLs []string
 		if req.ShareCode != "" {
 			tok, err := DecodeShareCode(req.ShareCode)
 			if err != nil {
 				writeError(w, 400, err.Error())
 				return
 			}
-			hostURL, projID, cid = tok.HostURL, tok.ProjectID, tok.IPFSCid
+			hostURL, altURLs, projID, cid = tok.HostURL, tok.AltURLs, tok.ProjectID, tok.IPFSCid
 		}
-		online, open, remoteProj := ProbeRemoteHost(hostURL, projID)
+		workingURL, online, open, remoteProj := ProbeRemoteHost(hostURL, altURLs, projID)
 		if !online || !open || remoteProj == nil {
-			// Still register it so it appears under Inicio -> Compartidos as offline!
 			if req.ShareCode != "" {
 				UpsertSharedRegistry(SharedRemoteEntry{
 					ProjectID: projID, Name: "Proyecto remoto (" + projID + ")", ShareCode: req.ShareCode,
-					IPFSCid: cid, HostURL: hostURL, HostOnline: online, HostOpen: false,
+					IPFSCid: cid, HostURL: hostURL, AltURLs: altURLs, HostOnline: online, HostOpen: false,
 					LastSeen: time.Now().Format(time.RFC3339),
 				})
 			}
-			writeError(w, 423, "El equipo original no tiene este horario abierto ahora mismo (no se puede editar hasta que lo abra)")
+			if !online {
+				writeError(w, 502, fmt.Sprintf("No se pudo conectar con el equipo anfitrión (%s). Comprueba que ambos equipos estén en la misma red Wi-Fi/LAN, que OpenMimo esté abierto en el otro equipo y que el firewall permita la conexión.", hostURL))
+				return
+			}
+			writeError(w, 423, "El equipo anfitrión está en línea, pero este horario está cerrado o dejó de compartirse allí.")
 			return
 		}
 		remoteProj.Collab.IsRemote = true
-		remoteProj.Collab.HostURL = hostURL
+		remoteProj.Collab.HostURL = workingURL
 		remoteProj.Collab.HostOpen = true
 		remoteProj.Collab.ShareCode = req.ShareCode
 		UpsertSharedRegistry(SharedRemoteEntry{
 			ProjectID: remoteProj.ID, Name: remoteProj.Name, Institution: remoteProj.Institution,
 			ShareCode: remoteProj.Collab.ShareCode, IPFSCid: remoteProj.Collab.IPFSCid,
-			HostURL: hostURL, HostOnline: true, HostOpen: true, LastSeen: time.Now().Format(time.RFC3339),
+			HostURL: workingURL, AltURLs: altURLs, HostOnline: true, HostOpen: true, LastSeen: time.Now().Format(time.RFC3339),
 		})
 		state.mu.Lock()
 		state.openTabLocked(remoteProj)
 		resp := state.responsePayload()
 		state.mu.Unlock()
 		writeJSON(w, 200, resp)
+	}))
+
+	// Pull latest revision from host PC for the active remote tab (triggered on real-time SSE 'updated')
+	mux.HandleFunc("/api/collab/pull", withCORS(func(w http.ResponseWriter, r *http.Request) {
+		state.mu.Lock()
+		tab := state.activeTabLocked()
+		if tab == nil || !tab.Project.Collab.IsRemote {
+			resp := state.responsePayload()
+			state.mu.Unlock()
+			writeJSON(w, 200, resp)
+			return
+		}
+		hostURL := tab.Project.Collab.HostURL
+		shareCode := tab.Project.Collab.ShareCode
+		pid := tab.Project.ID
+		state.mu.Unlock()
+
+		var alts []string
+		if tok, err := DecodeShareCode(shareCode); err == nil {
+			alts = tok.AltURLs
+		}
+		workingURL, online, open, remoteProj := ProbeRemoteHost(hostURL, alts, pid)
+		state.mu.Lock()
+		defer state.mu.Unlock()
+		if tab := state.activeTabLocked(); tab != nil && tab.Project.ID == pid {
+			if online && open && remoteProj != nil {
+				remoteProj.Collab.IsRemote = true
+				remoteProj.Collab.HostURL = workingURL
+				remoteProj.Collab.HostOpen = true
+				remoteProj.Collab.ShareCode = shareCode
+				remoteProj.RecomputeDerived()
+				tab.Project = remoteProj
+				state.syncMirrorsLocked()
+			} else {
+				tab.Project.Collab.HostOpen = false
+			}
+		}
+		writeJSON(w, 200, state.responsePayload())
 	}))
 
 	// Host endpoint: check if a shared project is currently open in a tab on this PC
@@ -1058,7 +1143,9 @@ func main() {
 				cid, mode := PublishToIPFS(raw)
 				req.Project.Collab.IPFSCid = cid
 				req.Project.Collab.IPFSMode = mode
-				req.Project.Collab.ShareCode = EncodeShareCode(t.Project.Collab.HostURL, t.Project.ID, cid)
+				primary, alts := BuildHostURLs(state.listenPort)
+				req.Project.Collab.HostURL = primary
+				req.Project.Collab.ShareCode = EncodeShareCode(primary, alts, t.Project.ID, cid)
 				req.Project.RecomputeDerived()
 				t.Project = req.Project
 				_ = SaveProjectToDisk(t.Project)
@@ -2013,9 +2100,23 @@ func main() {
 		writeJSON(w, 200, state.responsePayload())
 	}))
 
-	// Bind on 0.0.0.0 so LAN peers can join shared IPFS/Collab sessions when shared
-	addr := fmt.Sprintf("0.0.0.0:%d", *portFlag)
-	ln, err := net.Listen("tcp", addr)
+	// Bind on 0.0.0.0 preferring predictable DefaultCollabPort (18787..18797, then :0)
+	// so saved shared links survive restarts and firewall rules stay stable across sessions.
+	var ln net.Listener
+	var err error
+	if *portFlag == 0 {
+		for tryPort := DefaultCollabPort; tryPort <= DefaultCollabPort+10; tryPort++ {
+			ln, err = net.Listen("tcp4", fmt.Sprintf("0.0.0.0:%d", tryPort))
+			if err == nil {
+				break
+			}
+		}
+		if ln == nil {
+			ln, err = net.Listen("tcp4", "0.0.0.0:0")
+		}
+	} else {
+		ln, err = net.Listen("tcp4", fmt.Sprintf("0.0.0.0:%d", *portFlag))
+	}
 	if err != nil {
 		ln, err = net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", *portFlag))
 		if err != nil {
@@ -2024,7 +2125,10 @@ func main() {
 		}
 	}
 	actualPort := ln.Addr().(*net.TCPAddr).Port
+	state.mu.Lock()
 	state.listenPort = actualPort
+	state.refreshAllSharedLocked()
+	state.mu.Unlock()
 	fmt.Printf("OPENMIMO_PORT=%d\n", actualPort)
 	_ = os.Stdout.Sync()
 
