@@ -390,6 +390,130 @@ func main() {
 		})
 	}))
 
+	// Local AI Settings (OpenAI-compatible API key stored locally with 0600 permissions, never in .omimo)
+	mux.HandleFunc("/api/ai/config", withCORS(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			cfg := LoadAISettings()
+			writeJSON(w, 200, map[string]any{
+				"baseUrl":   cfg.BaseURL,
+				"model":     cfg.Model,
+				"hasApiKey": strings.TrimSpace(cfg.APIKey) != "",
+				"apiKey":    cfg.APIKey,
+			})
+		case http.MethodPost, http.MethodPut:
+			var req AISettings
+			if err := decodeBody(r, &req); err != nil {
+				writeError(w, 400, err.Error())
+				return
+			}
+			if err := SaveAISettings(req); err != nil {
+				writeError(w, 500, err.Error())
+				return
+			}
+			cfg := LoadAISettings()
+			writeJSON(w, 200, map[string]any{
+				"baseUrl":   cfg.BaseURL,
+				"model":     cfg.Model,
+				"hasApiKey": strings.TrimSpace(cfg.APIKey) != "",
+				"apiKey":    cfg.APIKey,
+			})
+		}
+	}))
+
+	// Generate an OpenMimo JavaScript automation script using the configured OpenAI-compatible API Key
+	mux.HandleFunc("/api/ai/generate-script", withCORS(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Prompt string `json:"prompt"`
+		}
+		if err := decodeBody(r, &req); err != nil || strings.TrimSpace(req.Prompt) == "" {
+			writeError(w, 400, "Escribe una descripción para generar el script")
+			return
+		}
+		cfg := LoadAISettings()
+		if strings.TrimSpace(cfg.APIKey) == "" && !strings.Contains(cfg.BaseURL, "127.0.0.1") && !strings.Contains(cfg.BaseURL, "localhost") {
+			writeError(w, 400, "Configura tu API Key (estilo OpenAI) en Configuración → IA antes de generar scripts con IA.")
+			return
+		}
+		endpoint := strings.TrimRight(cfg.BaseURL, "/")
+		if !strings.HasSuffix(endpoint, "/chat/completions") {
+			endpoint += "/chat/completions"
+		}
+		state.mu.Lock()
+		projSummary := ""
+		if state.project != nil {
+			projSummary = fmt.Sprintf("Project: %s | Courses: %d | Resources: %d | Weeks: %d | Days: %d | Periods: %d | Guides: %d",
+				state.project.Name, len(state.project.Courses), len(state.project.Resources),
+				state.project.Time.MaxWeeks, state.project.Time.MaxDays, state.project.Time.MaxPeriods, len(state.project.Guides))
+		}
+		state.mu.Unlock()
+
+		sysPrompt := "You write concise JavaScript script bodies for OpenMimo's `function(project, log)` runner. " +
+			"project fields: courses (id,code,name,category,planned,minConsecutive,maxConsecutive,color,locked,guideId,resources[]), " +
+			"resources (id,code,name,category 1=Group 2=Teacher 3=Room,planned,mcpNotes), bookings (id,targetType,targetId,scope,week,day,period,kind,label), " +
+			"slots (id,courseId,week,day,period,roomId), guides (id,title,creditsEcts,groups[]), time (maxWeeks,maxDays,maxPeriods). " +
+			"Call log(...) to report actions. Return true if project was mutated, false if read-only. Return ONLY raw JavaScript code without markdown fences. " + projSummary
+
+		bodyObj := map[string]any{
+			"model": cfg.Model,
+			"messages": []map[string]string{
+				{"role": "system", "content": sysPrompt},
+				{"role": "user", "content": req.Prompt},
+			},
+			"temperature": 0.2,
+		}
+		payloadBytes, _ := json.Marshal(bodyObj)
+		httpReq, err := http.NewRequest("POST", endpoint, strings.NewReader(string(payloadBytes)))
+		if err != nil {
+			writeError(w, 400, err.Error())
+			return
+		}
+		httpReq.Header.Set("Content-Type", "application/json")
+		if strings.TrimSpace(cfg.APIKey) != "" {
+			httpReq.Header.Set("Authorization", "Bearer "+strings.TrimSpace(cfg.APIKey))
+		}
+		client := &http.Client{Timeout: 30 * time.Second}
+		resp, err := client.Do(httpReq)
+		if err != nil {
+			writeError(w, 502, "Error conectando con la API de IA: "+err.Error())
+			return
+		}
+		defer resp.Body.Close()
+		rawResp, _ := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
+		if resp.StatusCode >= 400 {
+			writeError(w, resp.StatusCode, fmt.Sprintf("Error de la API IA (%d): %s", resp.StatusCode, strings.TrimSpace(string(rawResp))))
+			return
+		}
+		var parsed struct {
+			Choices []struct {
+				Message struct {
+					Content string `json:"content"`
+				} `json:"message"`
+			} `json:"choices"`
+		}
+		if err := json.Unmarshal(rawResp, &parsed); err != nil || len(parsed.Choices) == 0 {
+			writeError(w, 502, "Respuesta inesperada del proveedor de IA")
+			return
+		}
+		code := strings.TrimSpace(parsed.Choices[0].Message.Content)
+		code = strings.TrimPrefix(code, "```javascript")
+		code = strings.TrimPrefix(code, "```js")
+		code = strings.TrimPrefix(code, "```")
+		code = strings.TrimSuffix(code, "```")
+		code = strings.TrimSpace(code)
+
+		name := req.Prompt
+		if len(name) > 46 {
+			name = name[:46]
+		}
+		writeJSON(w, 200, map[string]any{
+			"name":        name,
+			"description": req.Prompt,
+			"code":        code,
+			"model":       cfg.Model,
+		})
+	}))
+
 	// Script Library CRUD (Affinity-style scripting)
 	mux.HandleFunc("/api/scripts", withCORS(func(w http.ResponseWriter, r *http.Request) {
 		state.mu.Lock()

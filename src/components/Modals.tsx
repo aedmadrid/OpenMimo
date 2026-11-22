@@ -30,6 +30,7 @@ interface Props {
   project: Project;
   stats: ProjectStats;
   activeWeek: number;
+  initialOptionsTab?: 'limits' | 'bells' | 'categories' | 'ai';
   onUpdate: (promise: Promise<any>, toastMsg?: string) => Promise<any>;
 }
 
@@ -49,6 +50,7 @@ export const Modals: React.FC<Props> = ({
   project,
   stats,
   activeWeek,
+  initialOptionsTab,
   onUpdate,
 }) => {
   if (!modal) return null;
@@ -80,7 +82,13 @@ export const Modals: React.FC<Props> = ({
           />
         )}
         {modal === 'options' && (
-          <OptionsModal project={project} isEn={isEn} onUpdate={onUpdate} onClose={onClose} />
+          <OptionsModal
+            project={project}
+            isEn={isEn}
+            initialTab={initialOptionsTab}
+            onUpdate={onUpdate}
+            onClose={onClose}
+          />
         )}
         {modal === 'stats' && (
           <StatsModal project={project} stats={stats} isEn={isEn} onClose={onClose} />
@@ -732,18 +740,39 @@ const RoomsModal: React.FC<{
 const OptionsModal: React.FC<{
   project: Project;
   isEn: boolean;
+  initialTab?: 'limits' | 'bells' | 'categories' | 'ai';
   onUpdate: (p: Promise<any>, msg?: string) => Promise<any>;
   onClose: () => void;
-}> = ({ project, isEn, onUpdate, onClose }) => {
-  const [tab, setTab] = useState<'limits' | 'bells' | 'categories'>('limits');
+}> = ({ project, isEn, initialTab = 'limits', onUpdate, onClose }) => {
+  const [tab, setTab] = useState<'limits' | 'bells' | 'categories' | 'ai'>(initialTab);
   const [name, setName] = useState(project.name);
   const [institution, setInstitution] = useState(project.institution);
   const [department, setDepartment] = useState(project.department);
   const [time, setTime] = useState(project.time);
   const [resCats, setResCats] = useState(project.resourceCategories);
   const [roomsCat, setRoomsCat] = useState(project.roomsCategory);
+  const [aiBaseUrl, setAiBaseUrl] = useState('https://api.openai.com/v1');
+  const [aiApiKey, setAiApiKey] = useState('');
+  const [aiModel, setAiModel] = useState('gpt-4o-mini');
+  const [showKey, setShowKey] = useState(false);
+
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
+
+  useEffect(() => {
+    api
+      .getAIConfig()
+      .then((c) => {
+        setAiBaseUrl(c.baseUrl || 'https://api.openai.com/v1');
+        setAiModel(c.model || 'gpt-4o-mini');
+        setAiApiKey(c.apiKey || '');
+      })
+      .catch(() => {});
+  }, []);
 
   const save = async () => {
+    await api.saveAIConfig({ baseUrl: aiBaseUrl, model: aiModel, apiKey: aiApiKey });
     await onUpdate(
       api.updateSettings({
         name,
@@ -757,7 +786,7 @@ const OptionsModal: React.FC<{
         resourceCategories: resCats,
         bookingTypes: project.bookingTypes,
       }),
-      isEn ? 'Options saved' : 'Opciones actualizadas'
+      isEn ? 'Options & AI settings saved' : 'Ajustes guardados'
     );
     onClose();
   };
@@ -767,7 +796,7 @@ const OptionsModal: React.FC<{
       <div className="modal-header">
         <h3>
           <Settings size={17} color="#2563eb" />
-          {isEn ? 'Options & Limits' : 'Opciones y Límites'}
+          {isEn ? 'Settings & Limits' : 'Ajustes y Límites'}
         </h3>
         <button className="btn btn-icon" onClick={onClose}>
           <X size={15} />
@@ -786,6 +815,12 @@ const OptionsModal: React.FC<{
             onClick={() => setTab('categories')}
           >
             {isEn ? 'Categories & Rules' : 'Categorías y Reglas'}
+          </button>
+          <button
+            className={`tab-btn ${tab === 'ai' ? 'active' : ''}`}
+            onClick={() => setTab('ai')}
+          >
+            {isEn ? 'AI (API Key)' : 'IA (API Key)'}
           </button>
         </div>
 
@@ -990,6 +1025,54 @@ const OptionsModal: React.FC<{
               ))}
             </tbody>
           </table>
+        )}
+
+        {tab === 'ai' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+              {isEn
+                ? 'Configure an OpenAI-compatible API key to generate scripts with AI. Stored only locally on this computer and never included in .omimo files.'
+                : 'Configura una API Key compatible con OpenAI para generar scripts con IA. Se guarda únicamente en este equipo y nunca se exporta dentro de los archivos .omimo.'}
+            </div>
+            <div className="field">
+              <label>{isEn ? 'API Key (OpenAI / OpenRouter / Groq / compatible)' : 'API Key (OpenAI / OpenRouter / Groq / compatible)'}</label>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <input
+                  className="input"
+                  style={{ flex: 1, fontFamily: 'monospace' }}
+                  type={showKey ? 'text' : 'password'}
+                  placeholder="sk-..."
+                  value={aiApiKey}
+                  onChange={(e) => setAiApiKey(e.target.value)}
+                />
+                <button type="button" className="btn btn-sm" onClick={() => setShowKey((s) => !s)}>
+                  {showKey ? (isEn ? 'Hide' : 'Ocultar') : isEn ? 'Show' : 'Ver'}
+                </button>
+              </div>
+            </div>
+            <div className="form-grid">
+              <div className="field">
+                <label>{isEn ? 'API Base URL' : 'URL base de la API'}</label>
+                <input
+                  className="input"
+                  style={{ fontFamily: 'monospace' }}
+                  placeholder="https://api.openai.com/v1"
+                  value={aiBaseUrl}
+                  onChange={(e) => setAiBaseUrl(e.target.value)}
+                />
+              </div>
+              <div className="field">
+                <label>{isEn ? 'Model' : 'Modelo'}</label>
+                <input
+                  className="input"
+                  style={{ fontFamily: 'monospace' }}
+                  placeholder="gpt-4o-mini"
+                  value={aiModel}
+                  onChange={(e) => setAiModel(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
         )}
       </div>
       <div className="modal-footer">

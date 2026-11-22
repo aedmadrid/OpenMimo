@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Play,
   Plus,
@@ -11,6 +11,7 @@ import {
   Copy,
   Check,
   Code2,
+  KeyRound,
 } from 'lucide-react';
 import type { Project, UserScript } from '../types';
 import { api } from '../api';
@@ -18,154 +19,10 @@ import { api } from '../api';
 interface Props {
   project: Project;
   onUpdate: (promise: Promise<any>, toastMsg?: string) => Promise<any>;
+  onOpenAISettings: () => void;
 }
 
-function generateScriptFromPrompt(prompt: string, isEn: boolean): { name: string; description: string; code: string } {
-  const low = prompt.toLowerCase();
-
-  if (low.includes('viernes') || low.includes('friday') || low.includes('tarde') || low.includes('afternoon') || low.includes('bloqu') || low.includes('unavail')) {
-    const day = low.includes('lunes') || low.includes('monday') ? 1
-      : low.includes('martes') || low.includes('tuesday') ? 2
-      : low.includes('miércoles') || low.includes('miercoles') || low.includes('wednesday') ? 3
-      : low.includes('jueves') || low.includes('thursday') ? 4 : 5;
-    const minPeriod = low.includes('mañana') || low.includes('morning') ? 1 : 6;
-    const maxPeriod = low.includes('mañana') || low.includes('morning') ? 5 : 10;
-    return {
-      name: prompt.slice(0, 46),
-      description: isEn ? `AI generated: ${prompt}` : `Generado con IA: ${prompt}`,
-      code: `// ${prompt}
-const teachers = project.resources.filter(r => r.category === 2);
-let added = 0;
-for (const t of teachers) {
-  for (let w = 1; w <= project.time.maxWeeks; w++) {
-    for (let p = ${minPeriod}; p <= Math.min(${maxPeriod}, project.time.maxPeriods); p++) {
-      const exists = project.bookings.some(b =>
-        b.targetId === t.id && b.week === w && b.day === ${day} && b.period === p
-      );
-      if (!exists) {
-        project.bookings.push({
-          id: 'b_ai_' + t.id + '_' + w + '_' + p,
-          targetType: 'resource',
-          targetId: t.id,
-          scope: 'timetable',
-          week: w,
-          day: ${day},
-          period: p,
-          kind: 1,
-          label: 'Bloqueado (IA)'
-        });
-        added++;
-      }
-    }
-  }
-}
-log('Bloqueos añadidos: ' + added + ' para ' + teachers.length + ' docentes.');
-return added > 0;`,
-    };
-  }
-
-  if (low.includes('color') || low.includes('pintar') || low.includes('paleta')) {
-    return {
-      name: prompt.slice(0, 46),
-      description: isEn ? `AI generated: ${prompt}` : `Generado con IA: ${prompt}`,
-      code: `// ${prompt}
-const palette = ['#2563eb', '#059669', '#d97706', '#7c3aed', '#e11d48', '#0891b2', '#4f46e5'];
-project.courses.forEach((c, idx) => {
-  c.color = palette[idx % palette.length];
-});
-log('Colores actualizados en ' + project.courses.length + ' sesiones.');
-return true;`,
-    };
-  }
-
-  if (low.includes('guia') || low.includes('guía') || low.includes('guide') || low.includes('astro')) {
-    return {
-      name: prompt.slice(0, 46),
-      description: isEn ? `AI generated: ${prompt}` : `Generado con IA: ${prompt}`,
-      code: `// ${prompt}
-let created = 0;
-for (const c of project.courses) {
-  if (!c.guideId) {
-    const id = 'g_ai_' + c.code.toLowerCase().replace(/[^a-z0-9]/g, '');
-    if (!project.guides.some(g => g.id === id)) {
-      project.guides.push({
-        id,
-        slug: id,
-        title: c.name,
-        degree: project.institution,
-        degreeLevel: 'Grado',
-        courseType: 'Obligatoria',
-        character: 'Teórico-práctica',
-        specialty: '',
-        subjectArea: '',
-        academicYear: '1º',
-        semester: '1º Semestre',
-        creditsEcts: 6,
-        totalHours: 150,
-        inPersonHours: 60,
-        department: project.department,
-        prerequisites: '',
-        languages: 'Español',
-        description: '',
-        groups: [],
-        competencies: '',
-        learningOutcomes: '',
-        contents: '',
-        theoryActivities: '',
-        practiceActivities: '',
-        otherActivities: '',
-        studentWorkHours: '',
-        evalAttitudePct: 20,
-        evalWrittenPct: 30,
-        evalPracticalPct: 50,
-        evalCriteria: '',
-        bibliography: '',
-        updatedAt: new Date().toISOString()
-      });
-      created++;
-    }
-    c.guideId = id;
-  }
-}
-log('Guías creadas/vinculadas: ' + created);
-return created > 0;`,
-    };
-  }
-
-  if (low.includes('nota') || low.includes('mcp') || low.includes('note')) {
-    return {
-      name: prompt.slice(0, 46),
-      description: isEn ? `AI generated: ${prompt}` : `Generado con IA: ${prompt}`,
-      code: `// ${prompt}
-const note = ${JSON.stringify(prompt)};
-let count = 0;
-for (const r of project.resources) {
-  if (r.category === 2) {
-    r.mcpNotes = r.mcpNotes ? r.mcpNotes + ' | ' + note : note;
-    count++;
-  }
-}
-log('Nota MCP añadida a ' + count + ' docentes.');
-return count > 0;`,
-    };
-  }
-
-  // Default smart audit & summary script
-  return {
-    name: prompt.slice(0, 46) || (isEn ? 'AI Script' : 'Script IA'),
-    description: isEn ? `AI generated: ${prompt}` : `Generado con IA: ${prompt}`,
-    code: `// ${prompt}
-log('Proyecto: ' + project.name + ' (' + project.courses.length + ' sesiones, ' + project.resources.length + ' recursos)');
-const unscheduled = project.courses.filter(c => c.allocated > c.scheduled);
-log('Sesiones con horas pendientes: ' + unscheduled.length);
-for (const c of unscheduled.slice(0, 15)) {
-  log('  - ' + c.code + ' ' + c.name + ': ' + c.scheduled + '/' + c.allocated + ' h');
-}
-return false; // Cambia a return true si modificas project`,
-  };
-}
-
-export const ScriptsView: React.FC<Props> = ({ project, onUpdate }) => {
+export const ScriptsView: React.FC<Props> = ({ project, onUpdate, onOpenAISettings }) => {
   const isEn = project.language === 'en';
   const scripts = project.scripts || [];
   const [selectedId, setSelectedId] = useState<string>(scripts[0]?.id || '__new__');
@@ -182,12 +39,30 @@ export const ScriptsView: React.FC<Props> = ({ project, onUpdate }) => {
     };
   });
   const [aiPrompt, setAiPrompt] = useState('');
-  const [aiEndpoint, setAiEndpoint] = useState('');
   const [aiBusy, setAiBusy] = useState(false);
+  const [hasApiKey, setHasApiKey] = useState(false);
+  const [aiModel, setAiModel] = useState('gpt-4o-mini');
   const [logs, setLogs] = useState<string[]>([]);
   const [runError, setRunError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
+
+  const refreshAiStatus = () => {
+    api
+      .getAIConfig()
+      .then((c) => {
+        setHasApiKey(Boolean(c.hasApiKey));
+        setAiModel(c.model || 'gpt-4o-mini');
+      })
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    refreshAiStatus();
+    const onFocus = () => refreshAiStatus();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, []);
 
   const selectScript = (sc: UserScript) => {
     setSelectedId(sc.id);
@@ -257,52 +132,21 @@ export const ScriptsView: React.FC<Props> = ({ project, onUpdate }) => {
     setAiBusy(true);
     setRunError(null);
     try {
-      if (aiEndpoint.trim()) {
-        // Optional OpenAI-compatible local/remote LLM endpoint (Ollama, LM Studio, Agente)
-        const resp = await fetch(aiEndpoint.trim(), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'default',
-            messages: [
-              {
-                role: 'system',
-                content:
-                  'Return ONLY valid JavaScript body for `function(project, log)` operating on an OpenMimo Project JSON. Return true if mutated, false if read-only.',
-              },
-              { role: 'user', content: aiPrompt },
-            ],
-          }),
-        });
-        const json = await resp.json();
-        const code = json?.choices?.[0]?.message?.content?.replace(/```[a-z]*\n?|```/gi, '').trim();
-        if (code) {
-          setSelectedId('__new__');
-          setDraft({
-            id: '',
-            name: aiPrompt.slice(0, 44),
-            description: aiPrompt,
-            author: 'IA',
-            code,
-            updatedAt: '',
-          });
-          setAiPrompt('');
-          return;
-        }
-      }
-      const gen = generateScriptFromPrompt(aiPrompt.trim(), isEn);
+      const gen = await api.generateScriptAI(aiPrompt.trim());
       setSelectedId('__new__');
       setDraft({
         id: '',
         name: gen.name,
         description: gen.description,
-        author: 'IA',
+        author: `IA (${gen.model})`,
         code: gen.code,
         updatedAt: '',
       });
+      setLogs([isEn ? `✓ Script generated with ${gen.model}` : `✓ Script generado con ${gen.model}`]);
       setAiPrompt('');
+      refreshAiStatus();
     } catch (err: any) {
-      setRunError(`AI Error: ${err?.message || String(err)}`);
+      setRunError(err?.message || String(err));
     } finally {
       setAiBusy(false);
     }
@@ -358,7 +202,7 @@ export const ScriptsView: React.FC<Props> = ({ project, onUpdate }) => {
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, gap: 10 }}>
       <input ref={importRef} type="file" accept=".json,.omimo-script.json" style={{ display: 'none' }} onChange={handleImportScript} />
 
-      {/* Top Studio Bar + AI Generator */}
+      {/* Top Studio Bar + AI Generator backed by OpenAI API Key in Settings */}
       <div className="view-subbar">
         <div className="control-group">
           <Code2 size={16} color="#e11d48" />
@@ -366,20 +210,28 @@ export const ScriptsView: React.FC<Props> = ({ project, onUpdate }) => {
           <span className="stat-chip ok">{scripts.length}</span>
         </div>
 
-        <form onSubmit={handleGenerateAI} style={{ display: 'flex', gap: 6, flex: 1, maxWidth: 620, minWidth: 240 }}>
+        <form onSubmit={handleGenerateAI} style={{ display: 'flex', gap: 6, flex: 1, maxWidth: 580, minWidth: 220 }}>
           <input
             className="input"
             style={{ flex: 1 }}
             placeholder={
               isEn
-                ? 'Generate with AI (e.g. "Block Friday afternoons for all teachers")...'
-                : 'Generar con IA (ej. "Bloquear viernes tarde a profesores", "Colorear sesiones")...'
+                ? 'Generate with AI (uses your OpenAI API key in Settings)...'
+                : 'Generar con IA (usa tu API Key de Ajustes)...'
             }
             value={aiPrompt}
             onChange={(e) => setAiPrompt(e.target.value)}
           />
           <button className="btn btn-primary btn-sm" type="submit" disabled={aiBusy || !aiPrompt.trim()}>
-            <Sparkles size={13} /> {isEn ? 'Generate AI' : 'Generar IA'}
+            <Sparkles size={13} /> {aiBusy ? '...' : isEn ? 'Generate AI' : 'Generar IA'}
+          </button>
+          <button
+            type="button"
+            className={`btn btn-sm ${hasApiKey ? 'btn-ok' : 'btn-amber'}`}
+            onClick={onOpenAISettings}
+            title={hasApiKey ? `API Key OK (${aiModel})` : isEn ? 'Set OpenAI API Key in Settings' : 'Configurar API Key en Ajustes'}
+          >
+            <KeyRound size={12} /> {hasApiKey ? aiModel : 'API Key'}
           </button>
         </form>
 
@@ -388,10 +240,10 @@ export const ScriptsView: React.FC<Props> = ({ project, onUpdate }) => {
             <Upload size={12} /> {isEn ? 'Import' : 'Importar'}
           </button>
           <button className="btn btn-sm" onClick={handleShareCopy}>
-            {copied ? <Check size={12} color="#16a34a" /> : <Copy size={12} />} {isEn ? 'Copy JSON' : 'Copiar'}
+            {copied ? <Check size={12} color="#16a34a" /> : <Copy size={12} />} {isEn ? 'Copy' : 'Copiar'}
           </button>
           <button className="btn btn-sm" onClick={handleExportScript}>
-            <Share2 size={12} /> {isEn ? 'Share file' : 'Compartir'}
+            <Share2 size={12} /> {isEn ? 'Share' : 'Compartir'}
           </button>
         </div>
       </div>
@@ -468,22 +320,17 @@ export const ScriptsView: React.FC<Props> = ({ project, onUpdate }) => {
               onChange={(e) => setDraft({ ...draft, code: e.target.value })}
             />
 
-            {/* Optional custom LLM endpoint row */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: 'var(--text-faint)' }}>
-              <span>API IA (opcional):</span>
-              <input
-                className="input"
-                style={{ flex: 1, fontSize: 11, padding: '3px 7px' }}
-                placeholder="http://127.0.0.1:11434/v1/chat/completions (Ollama / Agente)"
-                value={aiEndpoint}
-                onChange={(e) => setAiEndpoint(e.target.value)}
-              />
-            </div>
-
             {/* Output & Debug Console */}
             <div className="script-console">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, color: '#94a3b8', fontSize: 11, fontWeight: 700 }}>
-                <Terminal size={12} /> {isEn ? 'Output & Debug Console' : 'Consola de salida y debug'}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#94a3b8', fontSize: 11, fontWeight: 700 }}>
+                  <Terminal size={12} /> {isEn ? 'Output & Debug Console' : 'Consola de salida y debug'}
+                </div>
+                {runError && !hasApiKey && (
+                  <button className="btn btn-sm btn-primary" onClick={onOpenAISettings}>
+                    <KeyRound size={11} /> {isEn ? 'Configure API Key' : 'Configurar API Key'}
+                  </button>
+                )}
               </div>
               {runError && <pre className="script-console-err">{runError}</pre>}
               {logs.length > 0 ? (

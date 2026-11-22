@@ -88,6 +88,18 @@ export const api = {
     req<ApiPayload>('/api/scripts', { method: 'POST', body: JSON.stringify(sc) }),
   deleteScript: (id: string) =>
     req<ApiPayload>(`/api/scripts?id=${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  getAIConfig: () =>
+    req<{ baseUrl: string; model: string; hasApiKey: boolean; apiKey: string }>('/api/ai/config'),
+  saveAIConfig: (cfg: { baseUrl: string; model: string; apiKey: string }) =>
+    req<{ baseUrl: string; model: string; hasApiKey: boolean; apiKey: string }>('/api/ai/config', {
+      method: 'POST',
+      body: JSON.stringify(cfg),
+    }),
+  generateScriptAI: (prompt: string) =>
+    req<{ name: string; description: string; code: string; model: string }>('/api/ai/generate-script', {
+      method: 'POST',
+      body: JSON.stringify({ prompt }),
+    }),
   newProject: (mode: 'empty' | 'demo', lang: 'es' | 'en') =>
     req<ApiPayload>('/api/project/new', { method: 'POST', body: JSON.stringify({ mode, lang }) }),
   undo: () => req<ApiPayload>('/api/undo', { method: 'POST' }),

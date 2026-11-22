@@ -216,6 +216,74 @@ func mcpToolDefinitions() []map[string]any {
 			},
 		},
 		{
+			"name":        "list_guides",
+			"description": "List all Teaching Guides (Guías Docentes) including contained session codes, parallel groups/teachers, competencies, contents, and evaluation weights.",
+			"inputSchema": map[string]any{"type": "object", "properties": map[string]any{}},
+		},
+		{
+			"name":        "save_guide",
+			"description": "Create or update a Teaching Guide (Guía Docente) and optionally sync contained course/session IDs.",
+			"inputSchema": map[string]any{
+				"type":     "object",
+				"required": []string{"title"},
+				"properties": map[string]any{
+					"id":                 map[string]any{"type": "string"},
+					"title":              map[string]any{"type": "string"},
+					"degree":             map[string]any{"type": "string"},
+					"degreeLevel":        map[string]any{"type": "string"},
+					"courseType":         map[string]any{"type": "string"},
+					"character":          map[string]any{"type": "string"},
+					"specialty":          map[string]any{"type": "string"},
+					"subjectArea":        map[string]any{"type": "string"},
+					"academicYear":       map[string]any{"type": "string"},
+					"semester":           map[string]any{"type": "string"},
+					"creditsEcts":        map[string]any{"type": "number"},
+					"totalHours":         map[string]any{"type": "integer"},
+					"inPersonHours":      map[string]any{"type": "integer"},
+					"department":         map[string]any{"type": "string"},
+					"prerequisites":      map[string]any{"type": "string"},
+					"languages":          map[string]any{"type": "string"},
+					"description":        map[string]any{"type": "string"},
+					"competencies":       map[string]any{"type": "string"},
+					"learningOutcomes":   map[string]any{"type": "string"},
+					"contents":           map[string]any{"type": "string"},
+					"theoryActivities":   map[string]any{"type": "string"},
+					"practiceActivities": map[string]any{"type": "string"},
+					"otherActivities":    map[string]any{"type": "string"},
+					"studentWorkHours":   map[string]any{"type": "string"},
+					"evalAttitudePct":    map[string]any{"type": "integer"},
+					"evalWrittenPct":     map[string]any{"type": "integer"},
+					"evalPracticalPct":   map[string]any{"type": "integer"},
+					"evalCriteria":       map[string]any{"type": "string"},
+					"bibliography":       map[string]any{"type": "string"},
+					"groups": map[string]any{
+						"type": "array",
+						"items": map[string]any{
+							"type": "object",
+							"properties": map[string]any{
+								"group":   map[string]any{"type": "string"},
+								"teacher": map[string]any{"type": "string"},
+								"shift":   map[string]any{"type": "string"},
+								"notes":   map[string]any{"type": "string"},
+							},
+						},
+					},
+					"containedCourseIds": map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+				},
+			},
+		},
+		{
+			"name":        "delete_guide",
+			"description": "Delete a Teaching Guide by ID and unlink any courses attached to it.",
+			"inputSchema": map[string]any{
+				"type":     "object",
+				"required": []string{"id"},
+				"properties": map[string]any{
+					"id": map[string]any{"type": "string"},
+				},
+			},
+		},
+		{
 			"name":        "list_scripts",
 			"description": "List all saved JavaScript automation scripts in the OpenMimo Script Library.",
 			"inputSchema": map[string]any{"type": "object", "properties": map[string]any{}},
@@ -589,6 +657,90 @@ func (s *AppState) executeMCPTool(name string, rawArgs json.RawMessage) (any, bo
 			return map[string]any{"written": args.OutputPath, "bytes": len(out)}, false
 		}
 		return map[string]any{"format": args.Format, "content": out}, false
+
+	case "list_guides":
+		if p.Guides == nil {
+			p.Guides = []TeachingGuide{}
+		}
+		out := make([]map[string]any, 0, len(p.Guides))
+		for _, g := range p.Guides {
+			contained := []string{}
+			for _, c := range p.Courses {
+				if c.GuideID == g.ID {
+					contained = append(contained, c.Code)
+				}
+			}
+			out = append(out, map[string]any{
+				"guide":            g,
+				"containedCourses": contained,
+			})
+		}
+		return out, false
+
+	case "save_guide":
+		var req struct {
+			TeachingGuide
+			ContainedCourseIDs []string `json:"containedCourseIds,omitempty"`
+		}
+		if err := json.Unmarshal(rawArgs, &req); err != nil || strings.TrimSpace(req.Title) == "" {
+			return map[string]any{"error": "title is required"}, true
+		}
+		s.pushUndo()
+		g := req.TeachingGuide
+		if g.ID == "" {
+			g.ID = fmt.Sprintf("g_mcp_%d", time.Now().UnixNano())
+		}
+		if g.Slug == "" {
+			g.Slug = makeSlug(g.Title)
+		}
+		g.UpdatedAt = time.Now().Format(time.RFC3339)
+		updated := false
+		for i := range p.Guides {
+			if p.Guides[i].ID == g.ID {
+				p.Guides[i] = g
+				updated = true
+				break
+			}
+		}
+		if !updated {
+			p.Guides = append(p.Guides, g)
+		}
+		if req.ContainedCourseIDs != nil {
+			wanted := make(map[string]bool, len(req.ContainedCourseIDs))
+			for _, cid := range req.ContainedCourseIDs {
+				wanted[cid] = true
+			}
+			for i := range p.Courses {
+				if wanted[p.Courses[i].ID] || wanted[p.Courses[i].Code] {
+					p.Courses[i].GuideID = g.ID
+				} else if p.Courses[i].GuideID == g.ID {
+					p.Courses[i].GuideID = ""
+				}
+			}
+		}
+		s.afterMutateLocked()
+		return g, false
+
+	case "delete_guide":
+		var args struct{ ID string `json:"id"` }
+		if err := json.Unmarshal(rawArgs, &args); err != nil || args.ID == "" {
+			return map[string]any{"error": "id is required"}, true
+		}
+		s.pushUndo()
+		out := make([]TeachingGuide, 0, len(p.Guides))
+		for _, g := range p.Guides {
+			if g.ID != args.ID {
+				out = append(out, g)
+			}
+		}
+		p.Guides = out
+		for i := range p.Courses {
+			if p.Courses[i].GuideID == args.ID {
+				p.Courses[i].GuideID = ""
+			}
+		}
+		s.afterMutateLocked()
+		return map[string]any{"deleted": args.ID}, false
 
 	case "list_scripts":
 		if p.Scripts == nil {

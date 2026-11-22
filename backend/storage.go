@@ -45,6 +45,52 @@ func SharedRegistryPath() string {
 	return filepath.Join(dir, "shared.json")
 }
 
+// AISettings stores local-only OpenAI-compatible API settings (never exported inside .omimo files).
+type AISettings struct {
+	BaseURL string `json:"baseUrl"`
+	APIKey  string `json:"apiKey"`
+	Model   string `json:"model"`
+}
+
+func AISettingsPath() string {
+	dir := AppDataDir()
+	_ = os.MkdirAll(dir, 0o755)
+	return filepath.Join(dir, "ai_settings.json")
+}
+
+func LoadAISettings() AISettings {
+	cfg := AISettings{
+		BaseURL: "https://api.openai.com/v1",
+		Model:   "gpt-4o-mini",
+	}
+	b, err := os.ReadFile(AISettingsPath())
+	if err != nil {
+		return cfg
+	}
+	_ = json.Unmarshal(b, &cfg)
+	if strings.TrimSpace(cfg.BaseURL) == "" {
+		cfg.BaseURL = "https://api.openai.com/v1"
+	}
+	if strings.TrimSpace(cfg.Model) == "" {
+		cfg.Model = "gpt-4o-mini"
+	}
+	return cfg
+}
+
+func SaveAISettings(cfg AISettings) error {
+	if strings.TrimSpace(cfg.BaseURL) == "" {
+		cfg.BaseURL = "https://api.openai.com/v1"
+	}
+	if strings.TrimSpace(cfg.Model) == "" {
+		cfg.Model = "gpt-4o-mini"
+	}
+	b, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(AISettingsPath(), b, 0o600)
+}
+
 type ProjectSummary struct {
 	ID            string `json:"id"`
 	Name          string `json:"name"`

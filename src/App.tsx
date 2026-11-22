@@ -77,6 +77,7 @@ export const App: React.FC = () => {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [activeWeek, setActiveWeek] = useState(1);
   const [modal, setModal] = useState<ModalKind>(window.__OPENMIMO_INIT_MODAL__ || null);
+  const [optionsTab, setOptionsTab] = useState<'limits' | 'bells' | 'categories' | 'ai'>('limits');
   const [guideCtx, setGuideCtx] = useState<{ guideId?: string; linkCourseId?: string }>({});
   const [mcpEnabled, setMcpEnabled] = useState<boolean>(true);
   const [mcpHttpUrl, setMcpHttpUrl] = useState<string>('');
@@ -782,8 +783,8 @@ export const App: React.FC = () => {
           <AppLogo size={26} />
         </button>
 
-        {/* 6 Primary Studio Views — Affinity solid-color active pills, NO colored dots */}
-        {project && !showHome ? (
+        {/* 6 Primary Studio Views — Left-aligned right after logo, Affinity solid-color active pills */}
+        {project && !showHome && (
           <nav className="view-switcher" aria-label="Main studios">
             <button
               data-studio="resources"
@@ -828,9 +829,9 @@ export const App: React.FC = () => {
               <Code2 size={13} /> <span>{t.views.scripts}</span>
             </button>
           </nav>
-        ) : (
-          <div style={{ flex: 1 }} data-tauri-drag-region={isMacCSD ? '' : undefined} />
         )}
+
+        <div className="topbar-spacer" data-tauri-drag-region={isMacCSD ? '' : undefined} />
 
         {/* Compact Responsive Action Toolbar */}
         <div className="toolbar-actions">
@@ -1066,6 +1067,10 @@ export const App: React.FC = () => {
               <ScriptsView
                 project={{ ...project, language: lang }}
                 onUpdate={onUpdate}
+                onOpenAISettings={() => {
+                  setOptionsTab('ai');
+                  setModal('options');
+                }}
               />
             )}
           </main>
@@ -1122,10 +1127,14 @@ export const App: React.FC = () => {
       {project && stats && (
         <Modals
           modal={modal}
-          onClose={() => setModal(null)}
+          onClose={() => {
+            setModal(null);
+            setOptionsTab('limits');
+          }}
           project={{ ...project, language: lang }}
           stats={stats}
           activeWeek={activeWeek}
+          initialOptionsTab={optionsTab}
           onUpdate={onUpdate}
         />
       )}
