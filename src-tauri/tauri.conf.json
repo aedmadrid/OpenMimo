@@ -15,11 +15,19 @@
     }
   },
   "bundle": {
-    "active": false,
+    "active": true,
+    "targets": "all",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/icon.png"
-    ]
+    ],
+    "resources": {
+      "../backend/openmimo-backend*": "backend/"
+    },
+    "category": "Education",
+    "shortDescription": "Horarios y guías docentes libres",
+    "longDescription": "OpenMimo es una aplicación libre (GNU GPLv3) de planificación de horarios académicos y guías docentes, compatible con archivos de Mimosa (.mfw/.mxt) y con formato abierto .omimo.",
+    "copyright": "GNU GPLv3 · Asociación de Estudiantes de Diseño de Madrid"
   }
 }
