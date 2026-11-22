@@ -262,25 +262,34 @@ func (s *AppState) tabListLocked() []ProjectTabInfo {
 	return out
 }
 
-func (s *AppState) sharedListWithLiveStatusLocked() []SharedRemoteEntry {
+func (s *AppState) sharedListWithLiveStatusLocked(probe bool) []SharedRemoteEntry {
 	reg := LoadSharedRegistry()
-	for i := range reg {
-		alts := reg[i].AltURLs
-		if len(alts) == 0 && reg[i].ShareCode != "" {
-			if tok, err := DecodeShareCode(reg[i].ShareCode); err == nil {
-				alts = tok.AltURLs
-			}
-		}
-		workingURL, online, open, _ := ProbeRemoteHost(reg[i].HostURL, alts, reg[i].ProjectID)
-		if workingURL != "" && online {
-			reg[i].HostURL = workingURL
-		}
-		reg[i].HostOnline = online
-		reg[i].HostOpen = online && open
-		if online {
-			reg[i].LastSeen = time.Now().Format(time.RFC3339)
-		}
+	if !probe || len(reg) == 0 {
+		return reg
 	}
+	var wg sync.WaitGroup
+	for i := range reg {
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			alts := reg[idx].AltURLs
+			if len(alts) == 0 && reg[idx].ShareCode != "" {
+				if tok, err := DecodeShareCode(reg[idx].ShareCode); err == nil {
+					alts = tok.AltURLs
+				}
+			}
+			workingURL, online, open, _ := ProbeRemoteHost(reg[idx].HostURL, alts, reg[idx].ProjectID)
+			if workingURL != "" && online {
+				reg[idx].HostURL = workingURL
+			}
+			reg[idx].HostOnline = online
+			reg[idx].HostOpen = online && open
+			if online {
+				reg[idx].LastSeen = time.Now().Format(time.RFC3339)
+			}
+		}(i)
+	}
+	wg.Wait()
 	return reg
 }
 
@@ -655,7 +664,8 @@ func main() {
 		state.mu.Unlock()
 
 		locals := ListLocalProjects(openIDs)
-		shared := state.sharedListWithLiveStatusLocked()
+		shouldProbe := r.URL.Query().Get("probe") == "1"
+		shared := state.sharedListWithLiveStatusLocked(shouldProbe)
 
 		writeJSON(w, 200, map[string]any{
 			"recent":     locals,

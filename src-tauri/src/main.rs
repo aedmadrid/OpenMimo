@@ -586,6 +586,11 @@ fn main() {
                 app.set_menu(menu)?;
             }
 
+            #[cfg(target_os = "macos")]
+            if is_screenshot {
+                app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+            }
+
             let mut builder =
                 WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
                     .title("OpenMimo")
@@ -603,6 +608,10 @@ fn main() {
 
             if is_screenshot {
                 builder = builder.focused(false);
+                #[cfg(target_os = "windows")]
+                {
+                    builder = builder.always_on_bottom(true);
+                }
             }
 
             let window = builder.build()?;
@@ -613,11 +622,22 @@ fn main() {
                 mac_native::center_traffic_lights(&window, 48.0);
             }
 
-            if let Some(out_path) = screenshot_path {
+            if let Some(raw_out_path) = screenshot_path {
+                let out_path = {
+                    let p = PathBuf::from(&raw_out_path);
+                    if p.is_absolute() {
+                        raw_out_path
+                    } else {
+                        std::env::current_dir()
+                            .map(|d| d.join(&p).to_string_lossy().to_string())
+                            .unwrap_or(raw_out_path)
+                    }
+                };
                 let win_clone = window.clone();
                 let child_clone = child_for_snap.clone();
                 std::thread::spawn(move || {
-                    std::thread::sleep(std::time::Duration::from_millis(2200));
+                    // ~120 frames at 60fps so WebView & React finish painting completely
+                    std::thread::sleep(std::time::Duration::from_millis(2000));
                     #[cfg(target_os = "macos")]
                     {
                         let win_main = win_clone.clone();

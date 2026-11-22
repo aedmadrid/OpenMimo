@@ -129,9 +129,9 @@ export const App: React.FC = () => {
     }
   }, []);
 
-  const refreshWorkspace = useCallback(async () => {
+  const refreshWorkspace = useCallback(async (probe = false) => {
     try {
-      const ws = await api.getWorkspace();
+      const ws = await api.getWorkspace(probe);
       setWorkspace(ws);
       setMcpEnabled(ws.mcpEnabled);
       setMcpHttpUrl(ws.mcpHttpUrl);
@@ -180,9 +180,10 @@ export const App: React.FC = () => {
         setMcpHttpUrl(ws.mcpHttpUrl);
         syncNativeLanguage(effectiveLang);
         setLoadError(null);
-        // Non-blocking startup update check against https://github.com/aedmadrid/openmimo/releases
+        // Non-blocking startup update check & remote shared status probe (skipped during --screenshot)
         if (!window.__OPENMIMO_SCREENSHOT__) {
           api.checkUpdates().then(setUpdateInfo).catch(() => {});
+          api.getWorkspace(true).then(setWorkspace).catch(() => {});
         }
         return;
       } catch (e: any) {
@@ -1085,7 +1086,7 @@ export const App: React.FC = () => {
             const res = await onUpdate(api.joinCollab({ hostUrl, projectId, shareCode }));
             if (res?.project) setShowHome(false);
           }}
-          onRefresh={refreshWorkspace}
+          onRefresh={() => refreshWorkspace(true)}
         />
       ) : (
         <>

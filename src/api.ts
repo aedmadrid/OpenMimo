@@ -62,7 +62,8 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  getWorkspace: () => req<WorkspaceResponse>('/api/workspace'),
+  getWorkspace: (probe = false) =>
+    req<WorkspaceResponse>(`/api/workspace${probe ? '?probe=1' : ''}`),
   openSample: (key: string, lang: 'es' | 'en') =>
     req<ApiPayload>('/api/projects/sample', { method: 'POST', body: JSON.stringify({ key, lang }) }),
   createProject: (cfg: WizardConfig) =>
