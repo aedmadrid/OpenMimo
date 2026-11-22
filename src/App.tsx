@@ -180,6 +180,14 @@ export const App: React.FC = () => {
         setMcpHttpUrl(ws.mcpHttpUrl);
         syncNativeLanguage(effectiveLang);
         setLoadError(null);
+        // Signal native host once React paints the loaded interface (used by --screenshot)
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            if (window.__TAURI_INTERNALS__?.invoke) {
+              window.__TAURI_INTERNALS__.invoke('notify_ui_ready').catch(() => {});
+            }
+          });
+        });
         // Non-blocking startup update check & remote shared status probe (skipped during --screenshot)
         if (!window.__OPENMIMO_SCREENSHOT__) {
           api.checkUpdates().then(setUpdateInfo).catch(() => {});

@@ -12,11 +12,17 @@ use tauri::{
 struct BackendState {
     url: String,
     _child: Arc<Mutex<Option<Child>>>,
+    ui_ready: Arc<std::sync::atomic::AtomicBool>,
 }
 
 #[tauri::command]
 fn get_backend_url(state: tauri::State<'_, BackendState>) -> String {
     state.url.clone()
+}
+
+#[tauri::command]
+fn notify_ui_ready(state: tauri::State<'_, BackendState>) {
+    state.ui_ready.store(true, std::sync::atomic::Ordering::SeqCst);
 }
 
 fn detect_system_lang() -> String {
@@ -573,22 +579,21 @@ fn main() {
         backend_url, is_screenshot, view_js, modal_js, lang_js, use_native_menu, is_mac_csd, platform
     );
 
+    let ui_ready = Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let ui_ready_snap = ui_ready.clone();
+
     let app = tauri::Builder::default()
         .manage(BackendState {
             url: backend_url,
             _child: child_arc,
+            ui_ready,
         })
-        .invoke_handler(tauri::generate_handler![get_backend_url, set_app_language])
+        .invoke_handler(tauri::generate_handler![get_backend_url, set_app_language, notify_ui_ready])
         .setup(move |app| {
             #[cfg(any(target_os = "macos", target_os = "linux"))]
             {
                 let menu = build_native_menu(app.handle(), &start_lang)?;
                 app.set_menu(menu)?;
-            }
-
-            #[cfg(target_os = "macos")]
-            if is_screenshot {
-                app.set_activation_policy(tauri::ActivationPolicy::Accessory);
             }
 
             let mut builder =
@@ -636,8 +641,20 @@ fn main() {
                 let win_clone = window.clone();
                 let child_clone = child_for_snap.clone();
                 std::thread::spawn(move || {
-                    // ~120 frames at 60fps so WebView & React finish painting completely
-                    std::thread::sleep(std::time::Duration::from_millis(2000));
+                    // Wait until React signals full UI painted (up to 6s max), then draw ~120 frames (~2s)
+                    let start = std::time::Instant::now();
+                    while !ui_ready_snap.load(std::sync::atomic::Ordering::SeqCst)
+                        && start.elapsed() < std::time::Duration::from_secs(6)
+                    {
+                        std::thread::sleep(std::time::Duration::from_millis(80));
+                    }
+                    // Ensure at least ~120 frames (2000ms) have rendered total
+                    let elapsed = start.elapsed();
+                    if elapsed < std::time::Duration::from_millis(2000) {
+                        std::thread::sleep(std::time::Duration::from_millis(2000) - elapsed);
+                    } else {
+                        std::thread::sleep(std::time::Duration::from_millis(250));
+                    }
                     #[cfg(target_os = "macos")]
                     {
                         let win_main = win_clone.clone();
