@@ -21,20 +21,31 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
+      # Astro 7 requires Node >= 22.23.4 (engines field).
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
       - name: Install & Build Astro Landing
         working-directory: landing
         run: |
-          bun install
+          bun install --frozen-lockfile
           bun run build
 
+      # No actions/configure-pages here on purpose: this is a plain static
+      # Astro build with `site` and `base` hardcoded in astro.config.mjs, so
+      # the Pages API lookup is not needed and used to fail the whole run when
+      # Pages was not enabled yet. Pages must be enabled once with
+      # Settings -> Pages -> Source: "GitHub Actions" (already configured for
+      # build_type=workflow with the openmimo.aedm.org.es custom domain).
       - name: Upload GitHub Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: landing/dist
 
@@ -47,4 +58,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
