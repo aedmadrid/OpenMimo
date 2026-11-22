@@ -6,24 +6,26 @@ const RELEASES_URL = 'https://github.com/aedmadrid/openmimo/releases/latest';
 const AEDM_URL = 'https://aedm.org.es';
 const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 
-const shots = [
-  { id: 'timetables', label: 'Horarios', color: '#059669', src: `${base}shots/timetables.png`, alt: 'Vista de Horarios interactivos de OpenMimo con huecos y mini-horarios vinculados' },
-  { id: 'guides', label: 'Guías Docentes', color: '#0284c7', src: `${base}shots/guides.png`, alt: 'Editor colaborativo de Guías Docentes con exportación a Astro' },
-  { id: 'scripts', label: 'Librería de Scripts', color: '#e11d48', src: `${base}shots/scripts.png`, alt: 'Librería de Scripts JavaScript con generación IA y consola de depuración' },
-  { id: 'courses', label: 'Sesiones y Reglas', color: '#ea580c', src: `${base}shots/courses.png`, alt: 'Gestión de sesiones con mínimo y máximo de horas seguidas' },
-  { id: 'home', label: 'Inicio y Proyectos', color: '#2563eb', src: `${base}shots/home.png`, alt: 'Pantalla de inicio con proyectos recientes, compartidos e importación Mimosa' },
+// Exact replica of OpenMimo's toolbar order and studio colors
+const studios = [
+  { id: 'resources', label: 'Recursos', color: '#2563eb', src: `${base}shots/resources.png`, alt: 'Recursos: grupos, profesorado con importación CSV, aulas y bloqueos de disponibilidad' },
+  { id: 'courses', label: 'Sesiones', color: '#ea580c', src: `${base}shots/courses.png`, alt: 'Sesiones: cursos, colecciones, asignaturas globales y horas seguidas mínimas/máximas' },
+  { id: 'weeks', label: 'Semanas', color: '#9333ea', src: `${base}shots/weeks.png`, alt: 'Semanas: distribución multi-semana y carga semanal por recurso' },
+  { id: 'timetables', label: 'Horarios', color: '#059669', src: `${base}shots/timetables.png`, alt: 'Horarios: rejilla interactiva con huecos disponibles y mini-horarios vinculados' },
+  { id: 'guides', label: 'Guías', color: '#0284c7', src: `${base}shots/guides.png`, alt: 'Guías Docentes: editor colaborativo con exportación estática a Astro' },
+  { id: 'scripts', label: 'Scripts', color: '#e11d48', src: `${base}shots/scripts.png`, alt: 'Scripts: librería JavaScript con consola de depuración y generación con IA' },
 ];
 
 const features = [
   {
-    badge: 'Clon de Mimosa',
+    badge: 'Sucesor espiritual libre',
     title: 'Abre tus archivos antiguos de Mimosa sin perder nada',
-    text: 'Mimosa desapareció y dejó de recibir mantenimiento. OpenMimo abre directamente los ficheros heredados (.mfw y .mxt) sin límites de capacidad y los guarda en formato abierto .omimo.',
+    text: 'Mimosa desapareció y dejó de recibir mantenimiento. OpenMimo —sin afiliación alguna con Mimosa— abre directamente ficheros heredados (.mfw y .mxt) sin límites y guarda en formato abierto .omimo.',
   },
   {
     badge: 'Nuevo diseño',
-    title: 'Interfaz moderna, clara y sin ruido visual',
-    text: 'Seis espacios de trabajo dedicados (Recursos, Sesiones, Semanas, Horarios, Guías y Scripts) con barra superior limpia, menú contextual propio y menús nativos.',
+    title: 'Interfaz moderna, clara y fiel al flujo real',
+    text: 'Seis espacios de trabajo en el mismo orden lógico (Recursos, Sesiones, Semanas, Horarios, Guías y Scripts), con menú contextual propio y menús nativos del sistema.',
   },
   {
     badge: 'MCP integrado',
@@ -33,25 +35,22 @@ const features = [
   {
     badge: 'Edición colaborativa',
     title: 'Tiempo real e IPFS para equipos y docentes',
-    text: 'Comparte un proyecto con un código para que varios coordinadores o profesores editen horarios y guías docentes simultáneamente mientras el equipo anfitrión lo mantiene abierto.',
+    text: 'Comparte un proyecto con un código para que varios coordinadores o profesores editen horarios y guías docentes a la vez mientras el equipo anfitrión lo mantiene abierto.',
   },
   {
     badge: 'Automejora + Scripts IA',
-    title: 'Optimización inteligente y automatización con tu API Key',
-    text: 'Motor de automejora multi-pasada con mínimo y máximo de horas seguidas por curso, además de una librería de scripts programables o generables con tu propia API Key estilo OpenAI.',
+    title: 'Optimización multi-pasada y automatización',
+    text: 'Motor de automejora con mínimo y máximo de horas seguidas por curso, además de librería de scripts programables o generables con tu propia API Key estilo OpenAI en Ajustes.',
   },
   {
     badge: 'FOSS · GNU GPLv3',
     title: 'Software libre y proyecto experimental abierto',
-    text: '100 % código abierto bajo licencia GNU GPLv3, sin versiones de pago ni bloqueos. Se encuentra en desarrollo experimental activo: revisa siempre tus horarios antes de publicarlos.',
+    text: '100 % código abierto bajo licencia GNU GPLv3, sin versiones de pago ni bloqueos. Se encuentra en fase experimental activa: revisa siempre tus horarios antes de publicarlos.',
   },
 ];
 ---
 
-<Layout
-  title="OpenMimo — Clon libre de Mimosa para horarios y guías docentes"
-  description="Clon libre (GNU GPLv3) y experimental de Mimosa compatible con archivos .mfw y .mxt, con nuevo diseño, MCP, edición colaborativa y guías en Astro. Iniciativa de aedm.org.es para la ESDMadrid."
->
+<Layout title="OpenMimo: Scheduling Software alternativo a Mimosa">
   <header class="nav">
     <div class="container nav-inner">
       <a href="#" class="brand">
@@ -81,11 +80,11 @@ const features = [
           <span class="pill-badge neutral">Compatible con .mfw y .mxt</span>
         </div>
 
-        <h1>El sucesor libre de Mimosa<br />para horarios y guías docentes.</h1>
+        <h1>El sucesor espiritual libre de Mimosa<br />para horarios y guías docentes.</h1>
         <p class="hero-sub">
-          Mimosa ya no existe ni se actualiza. <strong>OpenMimo</strong> es un clon moderno y de código abierto
-          compatible con la apertura de archivos antiguos de Mimosa, con nuevo diseño, servidor <strong>MCP</strong>,
-          <strong>edición colaborativa</strong> y guías docentes exportables a Astro.
+          Mimosa ya no existe ni se actualiza. <strong>OpenMimo</strong> es una alternativa independiente de código abierto
+          (no afiliada con Mimosa) compatible con la apertura de archivos antiguos de Mimosa, con nuevo diseño,
+          servidor <strong>MCP</strong>, <strong>edición colaborativa</strong> y guías docentes exportables a Astro.
         </p>
 
         <div class="hero-actions">
@@ -98,27 +97,35 @@ const features = [
         </div>
 
         <p class="origin-note">
-          Una iniciativa de <a href={AEDM_URL} target="_blank" rel="noreferrer"><strong>aedm.org.es</strong></a>
-          para que la <strong>ESDMadrid</strong> pueda actualizar su software de planificación académica.
+          Una iniciativa de la <a href={AEDM_URL} target="_blank" rel="noreferrer"><strong>Asociación de Estudiantes de Diseño de Madrid (aedm.org.es)</strong></a>
+          para que la <strong>Escuela Superior de Diseño de Madrid (ESDMadrid)</strong> actualice su software.
         </p>
 
-        <!-- Real App Screenshots Interactive Showcase -->
-        <div id="capturas" class="showcase">
-          <div class="shot-tabs" role="tablist" aria-label="Capturas de OpenMimo">
-            {shots.map((s, idx) => (
-              <button
-                type="button"
-                class={`shot-tab ${idx === 0 ? 'active' : ''}`}
-                data-shot={s.id}
-                data-color={s.color}
-                style={idx === 0 ? `background:${s.color};color:#fff;` : ''}
-              >
-                {s.label}
-              </button>
-            ))}
+        <!-- Exact App Toolbar Replica + Auto-Rotating Real App Screenshots -->
+        <div id="capturas" class="showcase" data-showcase>
+          <div class="app-toolbar-bar" role="tablist" aria-label="Apartados de OpenMimo">
+            <img src={`${base}logo.svg`} alt="" width="24" height="24" class="toolbar-logo" />
+            <div class="shot-tabs">
+              {studios.map((s, idx) => (
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={idx === 0 ? 'true' : 'false'}
+                  class={`shot-tab ${idx === 0 ? 'active' : ''}`}
+                  data-idx={idx}
+                  data-shot={s.id}
+                  data-color={s.color}
+                  style={idx === 0 ? `background:${s.color};color:#fff;` : ''}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+            <span class="toolbar-rot-hint" data-rot-status>Rotación automática</span>
           </div>
+
           <div class="shot-frame">
-            {shots.map((s, idx) => (
+            {studios.map((s, idx) => (
               <img
                 src={s.src}
                 alt={s.alt}
@@ -154,17 +161,18 @@ const features = [
       <div class="container">
         <div class="initiative-card">
           <div>
-            <span class="feature-badge">Proyecto FOSS · Experimental</span>
-            <h2>Iniciativa de aedm.org.es para modernizar el software de la ESDMadrid</h2>
+            <span class="feature-badge">Iniciativa comunitaria · GNU GPLv3</span>
+            <h2>Impulsado por la Asociación de Estudiantes de Diseño de Madrid para la ESDMadrid</h2>
             <p>
-              Ante la desaparición de Mimosa Scheduling Software, <strong>OpenMimo</strong> nace impulsado por{' '}
-              <a href={AEDM_URL} target="_blank" rel="noreferrer"><strong>aedm.org.es</strong></a> con el objetivo de ofrecer a la{' '}
-              <strong>ESDMadrid</strong> —y a cualquier centro educativo que lo necesite— una alternativa libre, moderna,
-              compatible con sus archivos históricos y mantenible por la comunidad bajo licencia <strong>GNU GPLv3</strong>.
+              Ante la desaparición de Mimosa Scheduling Software, <strong>OpenMimo</strong> nace como su{' '}
+              <strong>sucesor espiritual libre</strong> —sin afiliación alguna con Mimosa— impulsado por la{' '}
+              <a href={AEDM_URL} target="_blank" rel="noreferrer"><strong>Asociación de Estudiantes de Diseño de Madrid (aedm.org.es)</strong></a>{' '}
+              para que la <strong>Escuela Superior de Diseño de Madrid (ESDMadrid)</strong>, así como cualquier otro centro educativo,
+              pueda actualizar su software de horarios y guías docentes con una herramienta abierta y mantenible bajo licencia{' '}
+              <strong>GNU GPLv3</strong>.
             </p>
             <p class="exp-disclaimer">
-              <strong>Nota sobre el estado experimental:</strong> OpenMimo se encuentra en fase experimental activa.
-              Guarda copias en formato <code>.omimo</code> y verifica los resultados antes de su publicación oficial.
+              <strong>Estado experimental y aviso de no afiliación:</strong> OpenMimo es un proyecto independiente en fase experimental activa y no está afiliado, patrocinado ni respaldado por Mimosa Scheduling Software. Guarda copias en formato <code>.omimo</code> y verifica siempre tus horarios antes de publicarlos.
             </p>
           </div>
         </div>
@@ -200,7 +208,7 @@ const features = [
         <span>OpenMimo</span>
       </div>
       <p>
-        Iniciativa de <a href={AEDM_URL} target="_blank" rel="noreferrer"><strong>aedm.org.es</strong></a> ·
+        Iniciativa de la <a href={AEDM_URL} target="_blank" rel="noreferrer"><strong>Asociación de Estudiantes de Diseño de Madrid (aedm.org.es)</strong></a> ·
         Licencia <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noreferrer"><strong>GNU GPLv3</strong></a> ·
         <a href={REPO_URL} target="_blank" rel="noreferrer">github.com/aedmadrid/openmimo</a>
       </p>
@@ -208,25 +216,54 @@ const features = [
   </footer>
 
   <script>
-    const tabs = document.querySelectorAll('.shot-tab');
-    const imgs = document.querySelectorAll('.shot-img');
-    tabs.forEach((btn) => {
+    const showcase = document.querySelector('[data-showcase]');
+    const tabs = Array.from(document.querySelectorAll('.shot-tab')) as HTMLElement[];
+    const imgs = Array.from(document.querySelectorAll('.shot-img')) as HTMLElement[];
+    const statusEl = document.querySelector('[data-rot-status]');
+
+    let currentIdx = 0;
+    let paused = false;
+
+    function activate(idx: number) {
+      currentIdx = (idx + tabs.length) % tabs.length;
+      const btn = tabs[currentIdx];
+      const id = btn.getAttribute('data-shot');
+      const col = btn.getAttribute('data-color') || '#2563eb';
+
+      tabs.forEach((t, i) => {
+        const on = i === currentIdx;
+        t.classList.toggle('active', on);
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+        t.style.background = on ? col : '';
+        t.style.color = on ? '#ffffff' : '';
+      });
+
+      imgs.forEach((img) => {
+        img.classList.toggle('active', img.getAttribute('data-panel') === id);
+      });
+    }
+
+    tabs.forEach((btn, idx) => {
       btn.addEventListener('click', () => {
-        const id = btn.getAttribute('data-shot');
-        const col = btn.getAttribute('data-color') || '#2563eb';
-        tabs.forEach((t) => {
-          t.classList.remove('active');
-          (t as HTMLElement).style.background = '';
-          (t as HTMLElement).style.color = '';
-        });
-        btn.classList.add('active');
-        (btn as HTMLElement).style.background = col;
-        (btn as HTMLElement).style.color = '#ffffff';
-        imgs.forEach((img) => {
-          img.classList.toggle('active', img.getAttribute('data-panel') === id);
-        });
+        activate(idx);
       });
     });
+
+    showcase?.addEventListener('mouseenter', () => {
+      paused = true;
+      if (statusEl) statusEl.textContent = 'En pausa';
+    });
+
+    showcase?.addEventListener('mouseleave', () => {
+      paused = false;
+      if (statusEl) statusEl.textContent = 'Rotación automática';
+    });
+
+    window.setInterval(() => {
+      if (!paused && tabs.length > 1) {
+        activate(currentIdx + 1);
+      }
+    }, 4500);
   </script>
 </Layout>
 
@@ -381,14 +418,14 @@ const features = [
     font-size: clamp(32px, 5vw, 52px);
     line-height: 1.08;
     letter-spacing: -0.03em;
-    max-width: 820px;
+    max-width: 860px;
   }
 
   .hero-sub {
     margin: 0 0 26px;
     font-size: 16.5px;
     color: var(--muted);
-    max-width: 680px;
+    max-width: 700px;
   }
 
   .hero-actions {
@@ -400,9 +437,10 @@ const features = [
   }
 
   .origin-note {
-    margin: 0 0 36px;
+    margin: 0 0 34px;
     font-size: 13.5px;
     color: var(--faint);
+    max-width: 720px;
   }
 
   .origin-note a {
@@ -416,37 +454,62 @@ const features = [
     max-width: 980px;
     display: flex;
     flex-direction: column;
+    gap: 12px;
+  }
+
+  .app-toolbar-bar {
+    display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 10px;
+    padding: 8px 12px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+    flex-wrap: wrap;
+  }
+
+  .toolbar-logo {
+    border-radius: 6px;
+    flex-shrink: 0;
   }
 
   .shot-tabs {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
-    gap: 4px;
-    background: #ffffff;
-    padding: 4px;
-    border-radius: 11px;
+    gap: 3px;
+    background: #f4f6f9;
+    padding: 3px;
+    border-radius: 9px;
     border: 1px solid var(--border);
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
   }
 
   .shot-tab {
     border: none;
     background: transparent;
     color: var(--muted);
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 600;
-    padding: 7px 14px;
-    border-radius: 7px;
+    padding: 6px 12px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: background 0.14s ease, color 0.14s ease;
+    transition: background 0.16s ease, color 0.16s ease;
   }
 
   .shot-tab:hover:not(.active) {
-    background: #f1f5f9;
+    background: rgba(255, 255, 255, 0.85);
     color: var(--ink);
+  }
+
+  .toolbar-rot-hint {
+    margin-left: auto;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--faint);
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
   }
 
   .shot-frame {
@@ -467,6 +530,12 @@ const features = [
 
   .shot-img.active {
     display: block;
+    animation: fadeIn 0.28s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0.35; }
+    to { opacity: 1; }
   }
 
   .section {
@@ -551,7 +620,7 @@ const features = [
     margin: 0 0 12px;
     color: var(--muted);
     font-size: 15px;
-    max-width: 780px;
+    max-width: 820px;
   }
 
   .initiative-card a {
@@ -620,7 +689,8 @@ const features = [
   }
 
   @media (max-width: 840px) {
-    .nav-links {
+    .nav-links,
+    .toolbar-rot-hint {
       display: none;
     }
     .features-grid {

@@ -29,8 +29,6 @@ jobs:
 
       - name: Install & Build Astro Landing
         working-directory: landing
-        env:
-          ASTRO_BASE: /openmimo
         run: |
           bun install
           bun run build
