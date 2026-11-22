@@ -4,13 +4,14 @@ import Layout from '../layouts/Layout.astro';
 const REPO_URL = 'https://github.com/aedmadrid/openmimo';
 const RELEASES_URL = 'https://github.com/aedmadrid/openmimo/releases/latest';
 const AEDM_URL = 'https://aedm.org.es';
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 
 const shots = [
-  { id: 'timetables', label: 'Horarios', color: '#059669', src: '/shots/timetables.png', alt: 'Vista de Horarios interactivos de OpenMimo con huecos y mini-horarios vinculados' },
-  { id: 'guides', label: 'Guías Docentes', color: '#0284c7', src: '/shots/guides.png', alt: 'Editor colaborativo de Guías Docentes con exportación a Astro' },
-  { id: 'scripts', label: 'Librería de Scripts', color: '#e11d48', src: '/shots/scripts.png', alt: 'Librería de Scripts JavaScript con generación IA y consola de depuración' },
-  { id: 'courses', label: 'Sesiones y Reglas', color: '#ea580c', src: '/shots/courses.png', alt: 'Gestión de sesiones con mínimo y máximo de horas seguidas' },
-  { id: 'home', label: 'Inicio y Proyectos', color: '#2563eb', src: '/shots/home.png', alt: 'Pantalla de inicio con proyectos recientes, compartidos e importación Mimosa' },
+  { id: 'timetables', label: 'Horarios', color: '#059669', src: `${base}shots/timetables.png`, alt: 'Vista de Horarios interactivos de OpenMimo con huecos y mini-horarios vinculados' },
+  { id: 'guides', label: 'Guías Docentes', color: '#0284c7', src: `${base}shots/guides.png`, alt: 'Editor colaborativo de Guías Docentes con exportación a Astro' },
+  { id: 'scripts', label: 'Librería de Scripts', color: '#e11d48', src: `${base}shots/scripts.png`, alt: 'Librería de Scripts JavaScript con generación IA y consola de depuración' },
+  { id: 'courses', label: 'Sesiones y Reglas', color: '#ea580c', src: `${base}shots/courses.png`, alt: 'Gestión de sesiones con mínimo y máximo de horas seguidas' },
+  { id: 'home', label: 'Inicio y Proyectos', color: '#2563eb', src: `${base}shots/home.png`, alt: 'Pantalla de inicio con proyectos recientes, compartidos e importación Mimosa' },
 ];
 
 const features = [
@@ -54,7 +55,7 @@ const features = [
   <header class="nav">
     <div class="container nav-inner">
       <a href="#" class="brand">
-        <img src="/logo.svg" alt="OpenMimo" width="32" height="32" class="brand-icon" />
+        <img src={`${base}logo.svg`} alt="OpenMimo" width="32" height="32" class="brand-icon" />
         <span>OpenMimo</span>
         <span class="exp-tag">Experimental</span>
       </a>
@@ -195,7 +196,7 @@ const features = [
   <footer class="footer">
     <div class="container footer-inner">
       <div class="brand">
-        <img src="/logo.svg" alt="OpenMimo" width="24" height="24" class="brand-icon" />
+        <img src={`${base}logo.svg`} alt="OpenMimo" width="24" height="24" class="brand-icon" />
         <span>OpenMimo</span>
       </div>
       <p>

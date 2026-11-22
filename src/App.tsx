@@ -86,6 +86,8 @@ export const App: React.FC = () => {
   const [debugError, setDebugError] = useState<{ msg: string; stack?: string } | null>(null);
   const [updateInfo, setUpdateInfo] = useState<UpdateCheckResult | null>(null);
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; items: ContextMenuItem[] } | null>(null);
+  const [renamingTabId, setRenamingTabId] = useState<string | null>(null);
+  const [renameDraft, setRenameDraft] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const hasNativeMenu = Boolean(window.__OPENMIMO_NATIVE_MENU__);
@@ -927,18 +929,76 @@ export const App: React.FC = () => {
 
         {tabs.map((tab) => {
           const isActive = !showHome && project?.id === tab.id;
+          const isRenaming = isActive && renamingTabId === tab.id;
+          const commitRename = async () => {
+            const nextName = renameDraft.trim();
+            setRenamingTabId(null);
+            if (!project || !nextName || nextName === project.name) return;
+            await onUpdate(
+              api.updateSettings({
+                name: nextName,
+                institution: project.institution,
+                department: project.department,
+                comment: project.comment,
+                language: project.language,
+                roomsCategory: project.roomsCategory,
+                time: project.time,
+                courseCategories: project.courseCategories,
+                resourceCategories: project.resourceCategories,
+                bookingTypes: project.bookingTypes,
+              }),
+              isEn ? 'Schedule renamed' : 'Nombre del horario actualizado'
+            );
+          };
           return (
             <div
               key={tab.id}
               className={`proj-tab ${isActive ? 'active' : ''}`}
+              title={
+                isActive
+                  ? isEn
+                    ? 'Double-click to rename schedule'
+                    : 'Doble clic para cambiar el nombre del horario'
+                  : tab.name
+              }
               onClick={async () => {
-                await onUpdate(api.switchTab(tab.id));
-                setShowHome(false);
-                setActiveWeek(1);
+                if (isRenaming) return;
+                if (!isActive) {
+                  await onUpdate(api.switchTab(tab.id));
+                  setShowHome(false);
+                  setActiveWeek(1);
+                }
+              }}
+              onDoubleClick={(e) => {
+                if (!isActive || !project) return;
+                e.stopPropagation();
+                setRenameDraft(project.name);
+                setRenamingTabId(tab.id);
               }}
             >
               {tab.isRemote && <Radio size={11} color={tab.hostOpen ? '#16a34a' : '#dc2626'} />}
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{tab.name}</span>
+              {isRenaming ? (
+                <input
+                  className="proj-tab-input"
+                  autoFocus
+                  value={renameDraft}
+                  onFocus={(e) => e.currentTarget.select()}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => setRenameDraft(e.target.value)}
+                  onBlur={commitRename}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      commitRename();
+                    } else if (e.key === 'Escape') {
+                      e.preventDefault();
+                      setRenamingTabId(null);
+                    }
+                  }}
+                />
+              ) : (
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{tab.name}</span>
+              )}
               <button
                 className="proj-tab-close"
                 title={isEn ? 'Close tab' : 'Cerrar pestaña'}

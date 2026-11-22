@@ -1,35 +1,49 @@
-# Dependencies & Build Outputs
+# Dependencies
 node_modules/
 landing/node_modules/
+
+# Frontend & Astro Build Outputs
+dist/
 landing/dist/
 landing/.astro/
-dist/
+.vite/
+
+# Rust / Tauri Build & Auto-Generated Artifacts
 target/
 src-tauri/target/
-installers/
-shots/
+gen/
+src-tauri/gen/
 openmimo
 backend/openmimo-backend
 backend/openmimo-backend.exe
 
-# Installers & Archives
+# Installers, Bundles, Screenshots & Archives
+installers/
+shots/
+*.app/
 *.dmg
 *.pkg
 *.msi
 *.exe
 *.zip
+*.tar.gz
 
-# OS & Editor Metadata
-.DS_Store
-Thumbs.db
-*.swp
-.idea/
-.vscode/
-
-# Local Environment & Secrets
+# User Data & Private Keys / Secrets
+*.omimo
+*.mfw
+ai_settings.json
 .env
 .env.*
 *.pem
 *.key
 *.p12
 *.cert
+
+# OS & Editor Metadata
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+*.log

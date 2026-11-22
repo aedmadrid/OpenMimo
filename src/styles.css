@@ -98,6 +98,18 @@
   color: var(--text-main);
 }
 
+.proj-tab-input {
+  width: 150px;
+  padding: 1px 5px;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  background: #ffffff;
+  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 600;
+  outline: none;
+}
+
 /* MCP Status Pill with Green/Red Dot */
 .mcp-pill {
   display: inline-flex;
