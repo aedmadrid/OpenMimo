@@ -95,9 +95,22 @@ All addresses below are verified virtual addresses in `MFW-FREE.EXE` (`ImageBase
 - **`0x54a900` (`MaxWeeks`), `0x54aa70` (`MaxDays`), `0x54abbc` (`MaxPeriods`) — Non-Destructive Time Bounds Validation**:
   - Calls helper `0x49d1f8` to find the highest week/day/period currently containing allocations or scheduled slots, refusing to shrink limits below used indices ("cannot be smaller than %d").
   - **OpenMimo**: Enforced in Go backend `/api/settings` so shrinking weeks/days/periods never silently destroys scheduled data.
+- **`0x564410..0x5645d0` — Optimizer Config Loader (`[Optimize]` INI & Struct `[0x5a9fd8]`)**:
+  - Loads optimizer parameters into the global config record at `[0x5a9fd8]`:
+    - `0x564434`: `MinSeq` (`uint8`, offset `+0x18`), default **`1`** (`pushl $0x1`), range `0..255`.
+    - `0x56445d`: `MaxSeq` (`uint8`, offset `+0x19`), default **`3`** (`pushl $0x3`), range `0..255`.
+    - `0x564486`: `MaxRepeats` (`uint8`, offset `+0x1a`), default **`1`** (`pushl $0x1`), range `0..255`.
+    - `0x5644af`: `RandSeed` (`int32`, written to Delphi `System.RandSeed` `[0x5a9b08]`), code default `0` (`Default.mpf` supplies `38746`).
+    - `0x5644cb`: `Strategy` (`int32`, stored at `0x5ce7dc`), default `0`.
+    - `0x564558..0x5645b1`: Loop `esi = 1..7` (`cmpl $0x8, %esi`) loading `GapWeight1`..`GapWeight7` (`uint8` at `[0x5a9fd8]+1..+7`), default **`1`** (`pushl $0x1` at `0x564564`).
+  - **OpenMimo**: Uses exact decompiled defaults (`MinSeq=1`, `MaxSeq=3`, `GapWeight=1..10` across all 7 categories) plus per-course `minConsecutive`/`maxConsecutive` overrides.
+- **`0x49d1f8` (`Max`), `0x49d200` (`Min`), `0x49d208` (`Clamp(v, lo, hi)`) — Range & Bounds Primitives**:
+  - `0x49d1f8`: returns `max(eax, edx)`; `0x49d200`: returns `min(eax, edx)`; `0x49d208`: calls `Max(v, lo)` then `Min(res, hi)`.
+  - Used by `0x4bb525` (`Clamp(activeWeek + 1, 1, [0x5a9ad0]+0x7)`) and time-bounds guards (`0x54a900`, `0x54aa70`, `0x54abbc`).
 - **`0x57fe80..0x580060` — Gap Optimization & Delta Reporting**:
-  - Tracks up to `0x2710` (`10000` moves, `0x57fe9f`) in the optimization change log.
-  - Computes gap delta `gapsNow - gapsInitially` (`0x57ff9c..0x57ffa9`) and formats summary (`0x57ff48` -> `0x5808a8`).
+  - Tracks up to `0x2710` (`10000` moves, `0x57fe9f` and `0x57fece`) in the optimization change log arrays (`-0x758e(%ebp, idx*2)` and `-0xc3b0(%ebp, idx*2)`).
+  - Computes gap delta `gapsNow - gapsInitially` (`subl -0x30(%ebp), %eax` at `0x57ff9f`) and formats summary (`0x57ff48` -> `0x5808a8`).
+  - **OpenMimo**: Evaluates up to `10000` candidate moves per optimisation pass (matching `0x2710`) and reports exact `gapsBefore`, `gapsAfter`, `gapsChange`, and `gapsPercent`.
 - **`0x59b304` & `0x59bb4c` — `.mxt` Exchange Format Parser/Writer**:
   - Parses `[Weeklectures]`, `[Weekbookings]`, `[Tablelectures]`, `[Tablebookings]`, `[Manualrooms]` (`0x59ba88`) and `NoTimetables` (`0x59dead`).
 - **`0x4bb4c4` — Impossible Combination / Conflict Check**:

@@ -125,7 +125,7 @@ const OptimizeModal: React.FC<{
     minPeriod: 1,
     maxPeriod: project.time.maxPeriods,
     minBlock: 1,
-    maxBlock: 2,
+    maxBlock: 3,
     passes: 6,
     includeLocked: false,
     bookingsWithGaps: false,

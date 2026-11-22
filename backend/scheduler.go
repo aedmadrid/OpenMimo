@@ -467,10 +467,10 @@ func (p *Project) RunOptimizer(opts OptimizeOptions) OptimizeResult {
 		opts.MaxPeriod = p.Time.MaxPeriods
 	}
 	if opts.MinBlock < 1 {
-		opts.MinBlock = 1
+		opts.MinBlock = 1 // MFW-FREE.EXE 0x564434 (MinSeq default = 1)
 	}
 	if opts.MaxBlock < opts.MinBlock {
-		opts.MaxBlock = 2
+		opts.MaxBlock = 3 // MFW-FREE.EXE 0x56445d (MaxSeq default = 3)
 	}
 	if opts.RandSeed == 0 {
 		opts.RandSeed = 38746 // Default deterministic seed
@@ -803,11 +803,11 @@ func (p *Project) RunOptimizer(opts OptimizeOptions) OptimizeResult {
 		}
 
 	case "optimise":
-		// Iterative Gap & Consecutive-Block Minimization
+		// Iterative Gap & Consecutive-Block Minimization (up to 10,000 candidate evaluations matching MFW-FREE.EXE 0x57fe9f)
 		curObj := weightedBefore + p.ConsecutiveViolationPenalty(opts.FromWeek, opts.ToWeek)*4
-		maxMoves := 2800
+		maxMoves := 1000
 		if len(p.Slots) > 0 {
-			for iter := 0; iter < maxMoves && curObj > 0; iter++ {
+			for iter := 0; iter < maxMoves && res.MovesEvaluated < 10000 && curObj > 0; iter++ {
 				// Pick an eligible slot index
 				idx := rng.Intn(len(p.Slots))
 				s := p.Slots[idx]
