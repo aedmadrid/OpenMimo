@@ -1,0 +1,616 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const REPO_URL = 'https://github.com/aedmadrid/openmimo';
+const RELEASES_URL = 'https://github.com/aedmadrid/openmimo/releases/latest';
+
+const studios = [
+  { name: 'Recursos', color: '#2563eb', desc: 'Grupos, docentes con importación CSV, aulas y bloqueos visuales de disponibilidad.' },
+  { name: 'Sesiones', color: '#d97706', desc: 'Reglas de mínimo y máximo de horas seguidas por curso, colecciones y asignaturas globales.' },
+  { name: 'Semanas', color: '#0d9488', desc: 'Distribución multi-semana con totales de carga por recurso y avisos de sobrecarga.' },
+  { name: 'Horarios', color: '#059669', desc: 'Rejilla interactiva con huecos disponibles en vivo, mini-horarios vinculados y automejora.' },
+  { name: 'Guías', color: '#6366f1', desc: 'Editor colaborativo de guías docentes con grupos paralelos y exportación estática a Astro.' },
+  { name: 'Scripts', color: '#e11d48', desc: 'Librería de scripts JavaScript con consola de depuración, generación IA y compartición.' },
+];
+
+const features = [
+  {
+    badge: 'Automejora',
+    title: 'Motor de optimización multi-pasada',
+    text: 'Reduce huecos automáticamente con varias pasadas de mejora, sin conflictos y respetando el mínimo y máximo de horas seguidas configurado en cada curso.',
+  },
+  {
+    badge: '.omimo + Mimosa',
+    title: 'Abre archivos heredados y guarda en formato abierto',
+    text: 'Importa proyectos existentes en .mfw y .mxt sin límites artificiales y guárdalos en formato abierto .omimo legible y duradero.',
+  },
+  {
+    badge: 'Astro JS',
+    title: 'Guías docentes y publicación web en un clic',
+    text: 'Agrupa varias sesiones bajo una misma asignatura global, colabora con el profesorado y genera tanto horarios web con barra lateral como un sitio Astro completo.',
+  },
+  {
+    badge: 'MCP para Agentes',
+    title: 'Automatización abierta con cualquier agente IA',
+    text: 'Servidor MCP JSON-RPC 2.0 integrado (stdio y HTTP) con encendido/apagado instantáneo para que cualquier agente lea notas, bloquee horas o cree scripts.',
+  },
+  {
+    badge: 'IPFS + Tiempo Real',
+    title: 'Edición compartida sin servidores centrales',
+    text: 'Genera un código compartido para que varios coordinadores o docentes editen horarios y guías a la vez mientras el equipo anfitrión mantiene el archivo abierto.',
+  },
+  {
+    badge: 'GNU GPLv3',
+    title: 'Software libre, nativo y multiplataforma',
+    text: 'Construido con Tauri, React y Go para ofrecer arranque instantáneo, menús nativos y libertad total para auditar, modificar y distribuir en tu centro educativo.',
+  },
+];
+---
+
+<Layout>
+  <header class="nav">
+    <div class="container nav-inner">
+      <a href="#" class="brand">
+        <img src="/logo.svg" alt="OpenMimo" width="32" height="32" class="brand-icon" />
+        <span>OpenMimo</span>
+      </a>
+      <nav class="nav-links">
+        <a href="#estudios">Estudios</a>
+        <a href="#funciones">Funciones</a>
+        <a href="#descargar">Descargar</a>
+        <a href={REPO_URL} target="_blank" rel="noreferrer">GitHub</a>
+      </nav>
+      <a href={RELEASES_URL} target="_blank" rel="noreferrer" class="btn btn-primary">
+        Descargar v1.0
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-inner">
+        <div class="pill-badge">Software Libre · Licencia GNU GPLv3</div>
+        <h1>Horarios académicos y guías docentes,<br />sin límites ni licencias cerradas.</h1>
+        <p class="hero-sub">
+          OpenMimo moderniza la planificación escolar y universitaria: importa tus archivos de Mimosa,
+          mejora horarios automáticamente, redacta guías docentes colaborativas y publica en Astro.
+        </p>
+        <div class="hero-actions">
+          <a href={RELEASES_URL} target="_blank" rel="noreferrer" class="btn btn-primary btn-lg">
+            Descargar para macOS y Windows
+          </a>
+          <a href={REPO_URL} target="_blank" rel="noreferrer" class="btn btn-outline btn-lg">
+            Ver código en GitHub
+          </a>
+        </div>
+
+        <div class="window-mock" aria-label="Vista previa de la barra de estudios de OpenMimo">
+          <div class="mock-topbar">
+            <div class="traffic-lights">
+              <span class="tl red"></span>
+              <span class="tl yellow"></span>
+              <span class="tl green"></span>
+            </div>
+            <img src="/logo.svg" alt="" width="22" height="22" class="mock-logo" />
+            <div class="mock-pills">
+              {studios.map((s, idx) => (
+                <span
+                  class={`mock-pill ${idx === 3 ? 'active' : ''}`}
+                  style={idx === 3 ? `background:${s.color};color:#fff;` : ''}
+                >
+                  {s.name}
+                </span>
+              ))}
+            </div>
+            <span class="mock-mcp"><span class="mcp-dot"></span>MCP</span>
+          </div>
+          <div class="mock-body">
+            <div class="mock-col">
+              <div class="mock-slot" style="border-left-color:#2563eb;background:#eff6ff;">
+                <strong>MAT-1A</strong><span>08:30 · Aula 101</span>
+              </div>
+              <div class="mock-slot" style="border-left-color:#059669;background:#ecfdf5;">
+                <strong>LAB-2B</strong><span>10:30 · Lab Norte</span>
+              </div>
+              <div class="mock-slot" style="border-left-color:#d97706;background:#fffbeb;">
+                <strong>FIS-1A</strong><span>12:30 · Aula 204</span>
+              </div>
+            </div>
+            <div class="mock-col">
+              <div class="mock-slot" style="border-left-color:#6366f1;background:#eef2ff;">
+                <strong>PROY-3A</strong><span>08:30 · Taller B</span>
+              </div>
+              <div class="mock-slot" style="border-left-color:#6366f1;background:#eef2ff;">
+                <strong>PROY-3A</strong><span>09:30 · Taller B (2h seg.)</span>
+              </div>
+              <div class="mock-slot" style="border-left-color:#e11d48;background:#fff1f2;">
+                <strong>SEM-IA</strong><span>11:30 · Aula Magna</span>
+              </div>
+            </div>
+            <div class="mock-col">
+              <div class="mock-slot" style="border-left-color:#0d9488;background:#f0fdfa;">
+                <strong>HIST-2A</strong><span>08:30 · Aula 105</span>
+              </div>
+              <div class="mock-slot" style="border-left-color:#2563eb;background:#eff6ff;">
+                <strong>MAT-1B</strong><span>10:30 · Aula 102</span>
+              </div>
+              <div class="mock-slot" style="border-left-color:#059669;background:#ecfdf5;">
+                <strong>0 conflictos · Automejora OK</strong><span>Huecos reducidos 64%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="estudios" class="section">
+      <div class="container">
+        <div class="section-head">
+          <h2>Seis espacios pensados para trabajar sin ruido</h2>
+          <p>Cada etapa de la organización académica tiene su propio estudio con acceso directo por teclado.</p>
+        </div>
+        <div class="studios-grid">
+          {studios.map((s) => (
+            <article class="studio-card">
+              <span class="studio-tag" style={`background:${s.color}`}>{s.name}</span>
+              <p>{s.desc}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section id="funciones" class="section section-alt">
+      <div class="container">
+        <div class="section-head">
+          <h2>Todo lo que necesita tu centro educativo</h2>
+          <p>Diseñado para ser familiar desde el primer minuto y potente para las necesidades actuales.</p>
+        </div>
+        <div class="features-grid">
+          {features.map((f) => (
+            <article class="feature-card">
+              <span class="feature-badge">{f.badge}</span>
+              <h3>{f.title}</h3>
+              <p>{f.text}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section id="descargar" class="section">
+      <div class="container">
+        <div class="download-box">
+          <div>
+            <h2>Descarga OpenMimo</h2>
+            <p>
+              Instaladores listos para macOS y Windows con búsqueda automática de nuevas versiones desde GitHub Releases.
+            </p>
+          </div>
+          <div class="download-actions">
+            <a href={RELEASES_URL} target="_blank" rel="noreferrer" class="btn btn-primary btn-lg">
+              macOS (.dmg)
+            </a>
+            <a href={RELEASES_URL} target="_blank" rel="noreferrer" class="btn btn-dark btn-lg">
+              Windows (.exe / .msi)
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="brand">
+        <img src="/logo.svg" alt="OpenMimo" width="24" height="24" class="brand-icon" />
+        <span>OpenMimo</span>
+      </div>
+      <p>
+        Distribuido bajo licencia <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noreferrer"><strong>GNU GPLv3</strong></a> ·
+        <a href={REPO_URL} target="_blank" rel="noreferrer">github.com/aedmadrid/openmimo</a>
+      </p>
+    </div>
+  </footer>
+</Layout>
+
+<style>
+  .container {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-inner {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+    font-size: 17px;
+    letter-spacing: -0.02em;
+  }
+
+  .brand-icon {
+    border-radius: 8px;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 24px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+
+  .nav-links a:hover {
+    color: var(--ink);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 16px;
+    border-radius: 9px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: transform 0.14s ease, background 0.14s ease, border-color 0.14s ease;
+  }
+
+  .btn:hover {
+    transform: translateY(-1px);
+  }
+
+  .btn-lg {
+    padding: 13px 22px;
+    font-size: 15px;
+    border-radius: 11px;
+  }
+
+  .btn-primary {
+    background: var(--blue);
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+  }
+
+  .btn-primary:hover {
+    background: #1d4ed8;
+  }
+
+  .btn-outline {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: var(--ink);
+  }
+
+  .btn-outline:hover {
+    border-color: #94a3b8;
+  }
+
+  .btn-dark {
+    background: #0f172a;
+    color: #ffffff;
+  }
+
+  .btn-dark:hover {
+    background: #1e293b;
+  }
+
+  .hero {
+    padding: 72px 0 56px;
+    text-align: center;
+    background: radial-gradient(circle at 50% 0%, #dbeafe 0%, var(--bg) 58%);
+  }
+
+  .hero-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .pill-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 14px;
+    border-radius: 999px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+    font-size: 12.5px;
+    font-weight: 700;
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    margin: 0 0 18px;
+    font-size: clamp(32px, 5vw, 54px);
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    max-width: 820px;
+  }
+
+  .hero-sub {
+    margin: 0 0 28px;
+    font-size: 17px;
+    color: var(--muted);
+    max-width: 650px;
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 44px;
+  }
+
+  .window-mock {
+    width: 100%;
+    max-width: 920px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+    overflow: hidden;
+    text-align: left;
+  }
+
+  .mock-topbar {
+    height: 48px;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #ffffff;
+  }
+
+  .traffic-lights {
+    display: flex;
+    gap: 6px;
+  }
+
+  .tl {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+  }
+  .tl.red { background: #ff5f57; }
+  .tl.yellow { background: #febc2e; }
+  .tl.green { background: #28c840; }
+
+  .mock-logo {
+    border-radius: 6px;
+  }
+
+  .mock-pills {
+    display: flex;
+    gap: 4px;
+    background: #f1f5f9;
+    padding: 3px;
+    border-radius: 8px;
+    overflow-x: auto;
+  }
+
+  .mock-pill {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .mock-mcp {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: #f8fafc;
+  }
+
+  .mcp-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+  }
+
+  .mock-body {
+    padding: 18px;
+    background: #f8fafc;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .mock-col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .mock-slot {
+    padding: 12px;
+    border-radius: 9px;
+    border-left: 4px solid var(--blue);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .mock-slot strong {
+    font-size: 13px;
+  }
+
+  .mock-slot span {
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+
+  .section {
+    padding: 72px 0;
+  }
+
+  .section-alt {
+    background: #ffffff;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-head {
+    text-align: center;
+    max-width: 640px;
+    margin: 0 auto 40px;
+  }
+
+  .section-head h2 {
+    margin: 0 0 10px;
+    font-size: clamp(24px, 3vw, 34px);
+    letter-spacing: -0.02em;
+  }
+
+  .section-head p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 15.5px;
+  }
+
+  .studios-grid,
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .studio-card,
+  .feature-card {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+
+  .section-alt .feature-card {
+    background: var(--bg);
+  }
+
+  .studio-tag {
+    display: inline-block;
+    color: #ffffff;
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 7px;
+    margin-bottom: 12px;
+  }
+
+  .studio-card p,
+  .feature-card p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .feature-badge {
+    display: inline-block;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--blue);
+    background: #eff6ff;
+    padding: 3px 9px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+  }
+
+  .feature-card h3 {
+    margin: 0 0 8px;
+    font-size: 16.5px;
+    letter-spacing: -0.01em;
+  }
+
+  .download-box {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  }
+
+  .download-box h2 {
+    margin: 0 0 6px;
+    font-size: 26px;
+  }
+
+  .download-box p {
+    margin: 0;
+    color: var(--muted);
+    max-width: 520px;
+  }
+
+  .download-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .footer {
+    border-top: 1px solid var(--border);
+    padding: 28px 0;
+    background: #ffffff;
+  }
+
+  .footer-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 13.5px;
+    color: var(--muted);
+  }
+
+  .footer-inner p {
+    margin: 0;
+  }
+
+  @media (max-width: 840px) {
+    .nav-links {
+      display: none;
+    }
+    .mock-body,
+    .studios-grid,
+    .features-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

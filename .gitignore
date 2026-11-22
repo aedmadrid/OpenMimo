@@ -1,0 +1,35 @@
+# Dependencies & Build Outputs
+node_modules/
+landing/node_modules/
+landing/dist/
+landing/.astro/
+dist/
+target/
+src-tauri/target/
+installers/
+shots/
+openmimo
+backend/openmimo-backend
+backend/openmimo-backend.exe
+
+# Installers & Archives
+*.dmg
+*.pkg
+*.msi
+*.exe
+*.zip
+
+# OS & Editor Metadata
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Local Environment & Secrets
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.cert

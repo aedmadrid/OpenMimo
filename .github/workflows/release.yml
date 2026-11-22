@@ -1,0 +1,65 @@
+name: Release OpenMimo (macOS & Windows)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            goos: darwin
+            goarch: arm64
+            backend_name: openmimo-backend
+          - os: windows-latest
+            goos: windows
+            goarch: amd64
+            backend_name: openmimo-backend.exe
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build Go Backend
+        shell: bash
+        run: |
+          cd backend
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -ldflags="-s -w" -o ${{ matrix.backend_name }} .
+
+      - name: Install Frontend Dependencies & Build UI
+        shell: bash
+        run: |
+          bun install --frozen-lockfile
+          bun run build
+
+      - name: Build Tauri App & Installer
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: .
+          tagName: v__VERSION__
+          releaseName: 'OpenMimo v__VERSION__'
+          releaseBody: 'Instaladores oficiales de OpenMimo para macOS y Windows (Licencia GNU GPLv3).'
+          releaseDraft: false
+          prerelease: false

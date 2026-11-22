@@ -1,0 +1,11 @@
+# Ejemplo de configuración MCP para cualquier Agente IA
+# OpenMimo expone 17 herramientas MCP sobre stdio (`openmimo --mcp` o `openmimo-backend -mcp`)
+# y también sobre HTTP JSON-RPC (`POST http://127.0.0.1:<puerto>/mcp`).
+
+mcp_servers:
+  openmimo:
+    command: "openmimo"
+    args: ["--mcp"]
+    # Alternativa directa al motor Go sin abrir ventana:
+    # command: "openmimo-backend"
+    # args: ["-mcp"]

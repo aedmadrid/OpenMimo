@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "values": [
+    {"name": "free_edition_max_codes", "group": "limits", "value": 80, "unit": "codes", "source": "function 0x55da74 (movl $0x50, %edi at 0x55da9f)"},
+    {"name": "free_edition_warning_threshold", "group": "limits", "value": 16, "unit": "remaining_codes", "source": "function 0x55da74 (cmpl $0x10, %edi at 0x55daf0)"},
+    {"name": "free_edition_warning_modulo", "group": "limits", "value": 5, "unit": "codes", "source": "function 0x55da74 (movl $0x5, %ecx; idivl at 0x55daf7)"},
+    {"name": "manual_rooms_max_slots_original", "group": "rooms", "value": 65535, "unit": "slots", "source": "function 0x4e8348 (cmpl $0xffff, %ebx at 0x4e8399)"},
+    {"name": "time_bounds_protect_used_data", "group": "time", "value": true, "source": "functions 0x54a900, 0x54aa70, 0x54abbc (helper 0x49d1f8)"},
+    {"name": "pro_mfw_max_codes", "group": "limits", "value": 8191, "unit": "codes", "source": "mfw header offset 0x06 (0x1FFF)"},
+    {"name": "openmimo_max_codes", "group": "limits", "value": 100000, "unit": "codes", "source": "unlocked pro capacity per user request"},
+    {"name": "max_weeks", "group": "time", "value": 255, "unit": "weeks", "source": "TTabNotebook DFM 0x2ae5c0 and mfw header offset 0x48"},
+    {"name": "max_days_per_week", "group": "time", "value": 7, "unit": "days", "source": "TTabNotebook DFM 0x2ae5c0 and mfw header offset 0x4A"},
+    {"name": "max_periods_per_day", "group": "time", "value": 30, "unit": "periods", "source": "TTabNotebook DFM 0x2ae5c0 and mfw header offset 0x4C"},
+    {"name": "default_days_per_week", "group": "time", "value": 5, "unit": "days", "source": "english.cfw and spanish.cfw [Limits] key 8"},
+    {"name": "default_periods_per_day", "group": "time", "value": 10, "unit": "periods", "source": "english.cfw [Limits] key 9 (12 in spanish.cfw)"},
+    {"name": "default_min_block_length", "group": "optimizer", "value": 1, "unit": "periods", "source": "Default.mpf [Optimize] MinSeq"},
+    {"name": "default_max_block_length", "group": "optimizer", "value": 10, "unit": "periods", "source": "Default.mpf [Optimize] MaxSeq"},
+    {"name": "optimizer_max_tracked_moves", "group": "optimizer", "value": 10000, "unit": "moves", "source": "function 0x57fe80 (cmpl $0x2710 at 0x57fe9f)"},
+    {"name": "default_rand_seed", "group": "optimizer", "value": 38746, "unit": "seed", "source": "Default.mpf [Optimize] RandSeed"},
+    {"name": "default_rooms_category", "group": "categories", "value": 3, "unit": "category_index", "source": "sample_intake1.mxt [Components] Rooms=3"},
+    {"name": "default_no_gaps_mask", "group": "optimizer", "value": "0;0;1;1;0;1;1", "source": "sample_intake1.mxt [Components] NoGaps"},
+    {"name": "default_no_timetables_mask", "group": "conflicts", "value": "0;0;0;1;0;0;0", "source": "sample_intake1.mxt [Components] NoTimetables"},
+    {"name": "mfw_course_flag_mask", "group": "file_format", "value": 16384, "unit": "bitmask", "source": "sample_intake1.mfw chunk 11/21/24 (0x4000)"},
+    {"name": "mfw_slot_week_shift", "group": "file_format", "value": 8, "unit": "bits", "source": "sample_intake1.mfw chunks 22/23"},
+    {"name": "mfw_slot_day_shift", "group": "file_format", "value": 5, "unit": "bits", "source": "sample_intake1.mfw chunks 22/23"},
+    {"name": "color_course_bg", "group": "theme", "value": "#ffcf2f", "source": "Default.mpf [WinColors] clCourse=3133439"},
+    {"name": "color_resource_bg", "group": "theme", "value": "#6699cc", "source": "Default.mpf [WinColors] clComp=13408614"},
+    {"name": "color_ok", "group": "theme", "value": "#339933", "source": "Default.mpf [WinColors] fcOk=3381555"},
+    {"name": "color_conflict", "group": "theme", "value": "#ff0000", "source": "Default.mpf [WinColors] fcNotOk=255"}
+  ]
+}
