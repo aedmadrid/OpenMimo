@@ -3,28 +3,29 @@ node_modules/
 landing/node_modules/
 
 # Frontend & Astro Build Outputs
-dist/
-landing/dist/
-landing/.astro/
+/dist/
+/landing/dist/
+/landing/.astro/
 .vite/
 
 # Rust / Tauri Build & Auto-Generated Artifacts
-target/
-src-tauri/target/
-gen/
-src-tauri/gen/
-openmimo
-backend/openmimo-backend
-backend/openmimo-backend.exe
+/target/
+/src-tauri/target/
+/gen/
+/src-tauri/gen/
+/openmimo
+/backend/openmimo-backend
+/backend/openmimo-backend.exe
 
-# Installers, Bundles, Screenshots & Archives
-installers/
-shots/
+# Local Installers, Bundles, Debug Screenshots & Archives (keep landing/public/shots/ tracked!)
+/installers/
+/shots/
 *.app/
 *.dmg
 *.pkg
 *.msi
 *.exe
+*.AppImage
 *.zip
 *.tar.gz
 
