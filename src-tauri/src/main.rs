@@ -389,6 +389,9 @@ fn find_backend_binary() -> PathBuf {
         if let Some(dir) = exe.parent() {
             candidates.push(dir.join(bin_name));
             candidates.push(dir.join("backend").join(bin_name));
+            candidates.push(dir.join("../Resources/backend").join(bin_name));
+            candidates.push(dir.join("../lib/OpenMimo/backend").join(bin_name));
+            candidates.push(dir.join("../lib/openmimo/backend").join(bin_name));
             candidates.push(dir.join("../backend").join(bin_name));
             candidates.push(dir.join("../../backend").join(bin_name));
             candidates.push(dir.join("../../../backend").join(bin_name));

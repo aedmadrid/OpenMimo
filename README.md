@@ -17,7 +17,7 @@
 ## Estructura del proyecto
 
 - `src/` — Interfaz React + TypeScript (Vite / Bun)
-- `src-tauri/` — Host nativo Tauri v2 (macOS y Windows)
+- `src-tauri/` — Host nativo Tauri v2 (macOS, Windows y Linux AppImage)
 - `backend/` — Motor de horarios, importador `.mfw`/`.mxt`, MCP e IPFS en Go
 - `landing/` — Página web oficial de presentación construida con Astro
 

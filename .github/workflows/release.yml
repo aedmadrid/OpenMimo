@@ -1,4 +1,4 @@
-name: Release OpenMimo (macOS & Windows)
+name: Release OpenMimo (macOS, Windows & Linux AppImage)
 
 on:
   push:
@@ -19,15 +19,28 @@ jobs:
             goos: darwin
             goarch: arm64
             backend_name: openmimo-backend
+            tauri_args: '--bundles dmg --config "{\"bundle\":{\"resources\":[\"backend/openmimo-backend\"]}}"'
           - os: windows-latest
             goos: windows
             goarch: amd64
             backend_name: openmimo-backend.exe
+            tauri_args: '--bundles nsis,msi --config "{\"bundle\":{\"resources\":[\"backend/openmimo-backend.exe\"]}}"'
+          - os: ubuntu-22.04
+            goos: linux
+            goarch: amd64
+            backend_name: openmimo-backend
+            tauri_args: '--bundles appimage --config "{\"bundle\":{\"resources\":[\"backend/openmimo-backend\"]}}"'
 
     runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install Linux Tauri & AppImage dependencies
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libgtk-3-dev
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -52,14 +65,15 @@ jobs:
           bun install --frozen-lockfile
           bun run build
 
-      - name: Build Tauri App & Installer
+      - name: Build Tauri App & Installers
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectPath: .
+          args: ${{ matrix.tauri_args }}
           tagName: v__VERSION__
           releaseName: 'OpenMimo v__VERSION__'
-          releaseBody: 'Instaladores oficiales de OpenMimo para macOS y Windows (Licencia GNU GPLv3).'
+          releaseBody: 'Instaladores oficiales de OpenMimo para macOS (.dmg), Windows (.exe/.msi) y Linux (.AppImage). Licencia GNU GPLv3.'
           releaseDraft: false
           prerelease: false

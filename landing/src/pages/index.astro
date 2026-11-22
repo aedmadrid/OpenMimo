@@ -89,7 +89,7 @@ const features = [
 
         <div class="hero-actions">
           <a href={RELEASES_URL} target="_blank" rel="noreferrer" class="btn btn-primary btn-lg">
-            Descargar para macOS y Windows
+            Descargar para macOS, Windows y Linux
           </a>
           <a href={REPO_URL} target="_blank" rel="noreferrer" class="btn btn-outline btn-lg">
             Ver repositorio en GitHub
@@ -101,27 +101,23 @@ const features = [
           para que la <strong>Escuela Superior de Diseño de Madrid (ESDMadrid)</strong> actualice su software.
         </p>
 
-        <!-- Exact App Toolbar Replica + Auto-Rotating Real App Screenshots -->
+        <!-- Centered Studio Tabs + Real App Screenshots + Subtle Autoplay Control Below -->
         <div id="capturas" class="showcase" data-showcase>
-          <div class="app-toolbar-bar" role="tablist" aria-label="Apartados de OpenMimo">
-            <img src={`${base}logo.svg`} alt="" width="24" height="24" class="toolbar-logo" />
-            <div class="shot-tabs">
-              {studios.map((s, idx) => (
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={idx === 0 ? 'true' : 'false'}
-                  class={`shot-tab ${idx === 0 ? 'active' : ''}`}
-                  data-idx={idx}
-                  data-shot={s.id}
-                  data-color={s.color}
-                  style={idx === 0 ? `background:${s.color};color:#fff;` : ''}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-            <span class="toolbar-rot-hint" data-rot-status>Rotación automática</span>
+          <div class="shot-tabs" role="tablist" aria-label="Apartados de OpenMimo">
+            {studios.map((s, idx) => (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={idx === 0 ? 'true' : 'false'}
+                class={`shot-tab ${idx === 0 ? 'active' : ''}`}
+                data-idx={idx}
+                data-shot={s.id}
+                data-color={s.color}
+                style={idx === 0 ? `background:${s.color};color:#fff;` : ''}
+              >
+                {s.label}
+              </button>
+            ))}
           </div>
 
           <div class="shot-frame">
@@ -134,6 +130,13 @@ const features = [
                 loading={idx === 0 ? 'eager' : 'lazy'}
               />
             ))}
+          </div>
+
+          <div class="autoplay-bar">
+            <button type="button" class="autoplay-btn" data-rot-toggle>
+              <span class="autoplay-dot" data-rot-dot></span>
+              <span data-rot-status>Rotación automática activa · Pausar</span>
+            </button>
           </div>
         </div>
       </div>
@@ -185,7 +188,7 @@ const features = [
           <div>
             <h2>Descarga OpenMimo</h2>
             <p>
-              Instaladores para macOS y Windows con búsqueda automática de nuevas releases en GitHub.
+              Instaladores para macOS, Windows y Linux (AppImage) con búsqueda automática de nuevas releases en GitHub.
             </p>
           </div>
           <div class="download-actions">
@@ -194,6 +197,9 @@ const features = [
             </a>
             <a href={RELEASES_URL} target="_blank" rel="noreferrer" class="btn btn-dark btn-lg">
               Windows (.exe / .msi)
+            </a>
+            <a href={RELEASES_URL} target="_blank" rel="noreferrer" class="btn btn-outline btn-lg">
+              Linux (.AppImage)
             </a>
           </div>
         </div>
@@ -220,9 +226,26 @@ const features = [
     const tabs = Array.from(document.querySelectorAll('.shot-tab')) as HTMLElement[];
     const imgs = Array.from(document.querySelectorAll('.shot-img')) as HTMLElement[];
     const statusEl = document.querySelector('[data-rot-status]');
+    const toggleBtn = document.querySelector('[data-rot-toggle]');
+    const dotEl = document.querySelector('[data-rot-dot]') as HTMLElement | null;
 
     let currentIdx = 0;
-    let paused = false;
+    let userPaused = false;
+    let hoverPaused = false;
+
+    function syncLabel() {
+      const paused = userPaused || hoverPaused;
+      if (statusEl) {
+        statusEl.textContent = userPaused
+          ? 'Rotación en pausa · Reanudar'
+          : hoverPaused
+          ? 'Rotación en pausa (cursor encima)'
+          : 'Rotación automática activa · Pausar';
+      }
+      if (dotEl) {
+        dotEl.style.background = paused ? '#94a3b8' : '#22c55e';
+      }
+    }
 
     function activate(idx: number) {
       currentIdx = (idx + tabs.length) % tabs.length;
@@ -249,18 +272,23 @@ const features = [
       });
     });
 
+    toggleBtn?.addEventListener('click', () => {
+      userPaused = !userPaused;
+      syncLabel();
+    });
+
     showcase?.addEventListener('mouseenter', () => {
-      paused = true;
-      if (statusEl) statusEl.textContent = 'En pausa';
+      hoverPaused = true;
+      syncLabel();
     });
 
     showcase?.addEventListener('mouseleave', () => {
-      paused = false;
-      if (statusEl) statusEl.textContent = 'Rotación automática';
+      hoverPaused = false;
+      syncLabel();
     });
 
     window.setInterval(() => {
-      if (!paused && tabs.length > 1) {
+      if (!userPaused && !hoverPaused && tabs.length > 1) {
         activate(currentIdx + 1);
       }
     }, 4500);
@@ -454,62 +482,69 @@ const features = [
     max-width: 980px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-  }
-
-  .app-toolbar-bar {
-    display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    background: #ffffff;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
-    flex-wrap: wrap;
-  }
-
-  .toolbar-logo {
-    border-radius: 6px;
-    flex-shrink: 0;
+    gap: 14px;
   }
 
   .shot-tabs {
-    display: flex;
+    display: inline-flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 3px;
-    background: #f4f6f9;
-    padding: 3px;
-    border-radius: 9px;
+    background: #ffffff;
+    padding: 4px;
+    border-radius: 10px;
     border: 1px solid var(--border);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
   }
 
   .shot-tab {
     border: none;
     background: transparent;
     color: var(--muted);
-    font-size: 12.5px;
+    font-size: 13px;
     font-weight: 600;
-    padding: 6px 12px;
-    border-radius: 6px;
+    padding: 6px 14px;
+    border-radius: 7px;
     cursor: pointer;
     transition: background 0.16s ease, color 0.16s ease;
   }
 
   .shot-tab:hover:not(.active) {
-    background: rgba(255, 255, 255, 0.85);
+    background: #f1f5f9;
     color: var(--ink);
   }
 
-  .toolbar-rot-hint {
-    margin-left: auto;
+  .autoplay-bar {
+    display: flex;
+    justify-content: center;
+  }
+
+  .autoplay-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.85);
+    color: var(--faint);
     font-size: 11.5px;
     font-weight: 600;
-    color: var(--faint);
-    padding: 3px 9px;
+    padding: 4px 11px;
     border-radius: 999px;
-    background: #f8fafc;
-    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: color 0.14s ease, border-color 0.14s ease;
+  }
+
+  .autoplay-btn:hover {
+    color: var(--ink);
+    border-color: #cbd5e1;
+  }
+
+  .autoplay-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #22c55e;
   }
 
   .shot-frame {
@@ -689,8 +724,7 @@ const features = [
   }
 
   @media (max-width: 840px) {
-    .nav-links,
-    .toolbar-rot-hint {
+    .nav-links {
       display: none;
     }
     .features-grid {
